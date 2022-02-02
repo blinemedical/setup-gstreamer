@@ -4,12 +4,14 @@ on:
   push:
     branches:
       - main
-      - 'releases/*'
 
 jobs:
   # unit tests
   units:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      matrix:
+        os: ['windows', 'macos']
     steps:
     - uses: actions/checkout@v2
     - run: npm ci
@@ -17,9 +19,31 @@ jobs:
 
   # test action works running from the graph
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      matrix:
+        os: ['windows', 'macos']
     steps:
     - uses: actions/checkout@v2
-    - uses: ./
-      with:
-        milliseconds: 1000
+
+    - name: Setup GStreamer with default version
+      id:   setup_gstreamer_default
+      uses: ./
+
+    - name: Echo output paths
+      run: |
+        echo "gstreamerX86Path: ${{ steps.setup_gstreamer_default.outputs.gstreamerX86Path }}"
+        echo "gstreamerX64Path: ${{ steps.setup_gstreamer_default.outputs.gstreamerX64Path }}"
+
+    - name: Run gst-inspect --version
+      if: ${{ matrix.os == 'windows' }}
+      env:
+        GST_BIN_PATH: ${{ steps.setup_gstreamer_default.outputs.gstreamerX64Path }}\\bin
+      run: ${{ env.GST_BIN_PATH }}\\gst-inspect-1.0.exe --version
+
+    - name: Run gst-inspect --version
+      if: ${{ matrix.os == 'macos' }}
+      env:
+        GST_BIN_PATH: ${{ steps.setup_gstreamer_default.outputs.gstreamerX64Path }}/Commands
+      run: ${{ env.GST_BIN_PATH }}/gst-inspect-1.0 --version
+
