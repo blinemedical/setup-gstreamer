@@ -1,7 +1,7 @@
 {
-  "name": "javascript-action",
+  "name": "setup-gstreamer",
   "version": "1.0.0",
-  "description": "JavaScript Action Template",
+  "description": "Setup GStreamer - GitHub Action",
   "main": "index.js",
   "scripts": {
     "lint": "eslint .",
@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/actions/javascript-action.git"
+    "url": "git+https://github.com/blinemedical/setup-gstreamer.git"
   },
   "keywords": [
     "GitHub",
@@ -21,15 +21,19 @@
   "author": "",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/actions/javascript-action/issues"
+    "url": "https://github.com/blinemedical/setup-gstreamer/issues"
   },
-  "homepage": "https://github.com/actions/javascript-action#readme",
+  "homepage": "https://github.com/blinemedical/setup-gstreamer#readme",
   "dependencies": {
-    "@actions/core": "^1.2.5"
+    "@actions/core": "^1.2.5",
+    "@actions/exec": "^1.1.0",
+    "@actions/io": "^1.1.1",
+    "@actions/tool-cache": "^1.7.1",
+    "semver": "^7.3.5"
   },
   "devDependencies": {
     "@vercel/ncc": "^0.31.1",
-    "eslint": "^8.0.0",
+    "eslint": "^8.8.0",
     "jest": "^27.2.5"
   }
 }

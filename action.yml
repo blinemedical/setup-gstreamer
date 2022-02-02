@@ -1,13 +1,19 @@
-name: 'Wait'
-description: 'Wait a designated number of milliseconds'
+name: 'Setup GStreamer'
+description: 'Setup GStreamer in the environment'
+author: 'Laerdal Labs, DC'
+branding:
+  color: 'red'
+  icon:  'activity'
 inputs:
-  milliseconds:  # id of input
-    description: 'number of milliseconds to wait'
-    required: true
-    default: '1000'
+  version:
+    description: 'version number'
+    required: false
+    default: '1.18.4'
 outputs:
-  time: # output will be available to future steps
-    description: 'The current time after waiting'
+  gstreamerX86Path:
+    description: 'x86 Architecture Installation path'
+  gstreamerX64Path:
+    description: 'x64 Architecture Installation path'
 runs:
   using: 'node12'
   main: 'dist/index.js'
