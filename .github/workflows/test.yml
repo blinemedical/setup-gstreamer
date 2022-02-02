@@ -4,12 +4,14 @@ on:
   push:
     branches:
       - main
-      - 'releases/*'
 
 jobs:
   # unit tests
   units:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      matrix:
+        os: ['windows', 'macos']
     steps:
     - uses: actions/checkout@v2
     - run: npm ci
@@ -17,9 +19,44 @@ jobs:
 
   # test action works running from the graph
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      matrix:
+        os: ['windows', 'macos']
+        arch: ['x86', 'x86_64']
+        exclude:
+          - os:   'macos'
+            arch: 'x86'
+
     steps:
     - uses: actions/checkout@v2
-    - uses: ./
+
+    - name: Setup GStreamer with default version
+      id:   setup_gstreamer_default
+      uses: ./
       with:
-        milliseconds: 1000
+        arch: ${{ matrix.arch }}
+
+    - name: Echo output path to env
+      if: ${{ matrix.os == 'windows' }}
+      run: |
+        chcp 65001 #set code page to utf-8
+        echo ("GSTREAMER_PATH=${{ steps.setup_gstreamer_default.outputs.gstreamerPath }}") >> $env:GITHUB_ENV
+
+    - name: Echo output path to env
+      if: ${{ matrix.os == 'macos' }}
+      run: |
+        echo "GSTREAMER_PATH=${{ steps.setup_gstreamer_default.outputs.gstreamerPath }}" >> $GITHUB_ENV
+
+    - name: Run gst-inspect --version
+      if: ${{ matrix.os == 'windows' }}
+      run: |
+        echo $env:GSTREAMER_PATH
+        ${{ env.GSTREAMER_PATH }}\bin\gst-inspect-1.0.exe --version
+
+    - name: Run gst-inspect --version
+      if: ${{ matrix.os == 'macos' }}
+      run: |
+        echo $GSTREAMER_PATH
+        $GSTREAMER_PATH/Commands/gst-inspect-1.0 --version
+
