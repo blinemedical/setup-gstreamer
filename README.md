@@ -26,7 +26,8 @@ The installation path.
 
 ## Example Usage
 
-In this example, it is a Windows environmnent and we want to set the `GSTREAMER_...` environment variables in a follow-on step.  The first step runs the installation.  The second step echos the toutput variables from the previous step into variables that are then redirected into the `GITHUB_ENV` variable.  If a next job were specified, it would have those variables set.
+In this example, it is a Windows environment and we want to set the `GSTREAMER_...` environment variables in a follow-on step.  The first step runs the installation.  The second step echoes the output variables from the previous step into variables that are then redirected into the `GITHUB_ENV` variable.  If a next job were specified, it would have those variables set.
+
 
 ```
 - name: Setup GStreamer
