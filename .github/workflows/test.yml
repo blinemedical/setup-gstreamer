@@ -13,7 +13,7 @@ jobs:
       matrix:
         os: ['windows', 'macos']
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - run: npm ci
     - run: npm test
 
@@ -29,7 +29,7 @@ jobs:
             arch: 'x86'
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Setup GStreamer with default version
       id:   setup_gstreamer_default
