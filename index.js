@@ -12,16 +12,16 @@ async function run() {
     let gstreamerPath = '';
     let gstreamerBinPath = '';
 
-    if (arch != 'x86' && arch != 'x86_64') {
-      core.setFailed('"arch" may only be x86 or x86_64');
-    }
-
     core.info(`Preparing to install GStreamer version ${version} on ${process.platform}...`);
 
     // debug is only output if you set the secret `ACTIONS_RUNNER_DEBUG` to true
     core.debug((new Date()).toTimeString());
 
     if (process.platform === 'win32') {
+      if (arch != 'x86' && arch != 'x86_64') {
+        core.setFailed('"arch" may only be x86 or x86_64');
+      }
+
       const installers = [
         `gstreamer-1.0-msvc-${arch}-${version}.msi`,
         `gstreamer-1.0-devel-msvc-${arch}-${version}.msi`
