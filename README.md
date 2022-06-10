@@ -47,9 +47,6 @@ In this example, it is a Windows environment and we want to set the `GSTREAMER_.
     version: '1.19.90'
     arch: 'x86'
 - run: |
-    chcp 65001 #set code page to utf-8
-    echo ("GSTREAMER_1_0_ROOT_MSVC_X86=${{ steps.setup_gstreamer.outputs.gstreamerPath }}") >> $env:GITHUB_ENV
-- run: |
     echo $env:GSTREAMER_1_0_ROOT_MSVC_X86
 ```
 
