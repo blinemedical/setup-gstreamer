@@ -12,11 +12,11 @@ Supported runner environments are Windows and macOS.
 
 ### `version`
 
-The version of GStreamer to install.  The default is 1.20.2
+The version of GStreamer to install.  The default is `1.20.2`
 
 ### `arch`
 
-The architecture (`x86` or `x86_64`) of binaries to install.
+The architecture (`x86`, `x86_64`, etc.) of binaries to install.  Defaults to `x86_64`.
 
 ## Outputs
 
