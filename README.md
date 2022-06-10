@@ -6,7 +6,7 @@ This action installs GStreamer by leveraging the release binaries for a specific
 https://gstreamer.freedesktop.org/data/pkg/
 ```
 
-Supported runner environments are Windows and macOS.
+Tested runner environments are macOS, Windows, and Ubuntu 20.04.
 
 ## Inputs
 
@@ -17,6 +17,10 @@ The version of GStreamer to install.  The default is `1.20.2`
 ### `arch`
 
 The architecture (`x86`, `x86_64`, etc.) of binaries to install.  Defaults to `x86_64`.
+
+### `repoUrl`
+
+The URL from where to clone the gstreamer source (Linux targets only).  Defaults to `https://gitlab.freedesktop.org/gstreamer/gstreamer.git`.
 
 ## Outputs
 

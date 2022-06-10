@@ -13,6 +13,10 @@ inputs:
     description: 'architecture (x86, x86_64)'
     required:    false
     default:     'x86_64'
+  repoUrl:
+    description: 'the location of the source repository'
+    required:    false
+    default:     'https://gitlab.freedesktop.org/gstreamer/gstreamer.git'
 outputs:
   gstreamerPath:
     description: 'Installation path'

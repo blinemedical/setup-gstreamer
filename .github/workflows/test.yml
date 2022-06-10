@@ -8,10 +8,10 @@ on:
 jobs:
   # unit tests
   units:
-    runs-on: ${{ matrix.os }}-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: ['windows', 'macos']
+        os: ['windows-2019', 'windows-2022', 'macos-12', 'ubuntu-20.04']
     steps:
     - uses: actions/checkout@v3
     - run: npm ci
@@ -19,20 +19,21 @@ jobs:
 
   # test action works running from the graph
   test:
-    runs-on: ${{ matrix.os }}-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: ['windows', 'macos']
+        os: ['windows-2019', 'windows-2022', 'macos-12', 'ubuntu-20.04']
         arch: ['x86', 'x86_64']
         exclude:
-          - os:   'macos'
+          - os:   'macos-12'
+            arch: 'x86'
+          - os:   'ubuntu-20.04'
             arch: 'x86'
 
     steps:
     - uses: actions/checkout@v3
 
     - name: Setup GStreamer with default version
-      id:   setup_gstreamer_default
       uses: ./
       with:
         arch: ${{ matrix.arch }}
