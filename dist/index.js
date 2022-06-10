@@ -9755,6 +9755,7 @@ async function run() {
     const version = core.getInput('version');
     const arch = core.getInput('arch');
     let gstreamerPath = '';
+    let gstreamerBinPath = '';
 
     if (arch != 'x86' && arch != 'x86_64') {
       core.setFailed('"arch" may only be x86 or x86_64');
@@ -9781,6 +9782,12 @@ async function run() {
       }
 
       gstreamerPath = `c:\\gstreamer\\1.0\\msvc_${arch}`;
+      gstreamerBinPath = `${gstreamerPath}\\bin`;
+
+      // Set the GSTREAMER_1_0_ROOT_MSVC_<arch> variable
+      let gst_root_varname = 'GSTREAMER_1_0_ROOT_MSVC_' + arch.toUpperCase();
+      core.info(`Setting environment variable: ${gst_root_varname}`);
+      core.exportVariable(gst_root_varname, gstreamerPath);
     }
     else if (process.platform === 'darwin') {
       if (arch == 'x86') {
@@ -9805,6 +9812,7 @@ async function run() {
       }
 
       gstreamerPath = '/Library/Frameworks/GStreamer.framework';
+      gstreamerBinPath = `${gstreamerPath}/Commands`;
     }
     else {
       // Pitch a fit / it's unsupported right now.
@@ -9813,9 +9821,9 @@ async function run() {
 
     core.info((new Date()).toTimeString());
 
-    // Configure the output(s)
+    // Configure the output(s), add 'bin' to the PATH (via GITHUB_PATH)
     core.setOutput('gstreamerPath', gstreamerPath);
-
+    core.addPath(gstreamerBinPath);
   } catch (error) {
     core.setFailed(error.message);
   }
