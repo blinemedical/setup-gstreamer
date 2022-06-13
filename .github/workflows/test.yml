@@ -37,26 +37,6 @@ jobs:
       with:
         arch: ${{ matrix.arch }}
 
-    - name: Echo output path to env
-      if: ${{ matrix.os == 'windows' }}
-      run: |
-        chcp 65001 #set code page to utf-8
-        echo ("GSTREAMER_PATH=${{ steps.setup_gstreamer_default.outputs.gstreamerPath }}") >> $env:GITHUB_ENV
-
-    - name: Echo output path to env
-      if: ${{ matrix.os == 'macos' }}
-      run: |
-        echo "GSTREAMER_PATH=${{ steps.setup_gstreamer_default.outputs.gstreamerPath }}" >> $GITHUB_ENV
-
     - name: Run gst-inspect --version
-      if: ${{ matrix.os == 'windows' }}
       run: |
-        echo $env:GSTREAMER_PATH
-        ${{ env.GSTREAMER_PATH }}\bin\gst-inspect-1.0.exe --version
-
-    - name: Run gst-inspect --version
-      if: ${{ matrix.os == 'macos' }}
-      run: |
-        echo $GSTREAMER_PATH
-        $GSTREAMER_PATH/Commands/gst-inspect-1.0 --version
-
+        gst-inspect-1.0 --version
