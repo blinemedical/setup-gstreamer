@@ -51,7 +51,7 @@ function LinuxDistroCommand(command, args) {
 // Github action runners (shared) currently run in passwordless sudo mode.
 const DistroVersionPackageMap = {
   'Ubuntu' : LinuxDistroConfig(['20.04'], {}, [
-    LinuxDistroCommand('sudo', ['DEBIAN_FRONTEND=noninteractive', 
+    LinuxDistroCommand('sudo', ['DEBIAN_FRONTEND=noninteractive',
       'apt', 'update']),
     LinuxDistroCommand('sudo', ['DEBIAN_FRONTEND=noninteractive',
       'apt', 'install', '-y',
@@ -101,7 +101,7 @@ async function run() {
         `gstreamer-1.0-msvc-${arch}-${version}.msi`,
         `gstreamer-1.0-devel-msvc-${arch}-${version}.msi`
       ];
-      
+
       for (const installer of installers) {
         const url = `${baseUrl}/windows/${version}/msvc/${installer}`;
 
@@ -171,7 +171,9 @@ async function run() {
             const prefix = '/usr';
             const opt = { cwd: `${process.cwd()}/${gstsrc}` };
             const key = `${gitUrl}-${version}-${arch}-${distro.name}-${distro.versionId}`;
+            core.saveState('CACHE_KEY', key);
             const cacheKey = await cache.restoreCache([gstsrc], key);
+            core.saveState('CACHE_RESULT', cacheKey);
 
             if (!cacheKey) {
               core.info(`Pre-built not found in cache; creating a new one. (key: "${key}")`);
