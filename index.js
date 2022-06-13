@@ -194,7 +194,7 @@ async function run() {
                 '-Dgtk_doc=disabled',
                 '-Dgpl=enabled',
                 'builddir'], opt);
-              await exec.exec('meson' ['compile', '-C', 'builddir'], opt);
+              await exec.exec('meson', ['compile', '-C', 'builddir'], opt);
               await cache.saveCache([gstsrc], key);
 
               core.info(`New cache created for this key: "${key}"`);
