@@ -8,6 +8,7 @@ test('test runs', () => {
   process.env['INPUT_ARCH'] = 'x86_64';
   const ip = path.join(__dirname, 'index.js');
   try {
+    console.log(process.env);
     let result = cp.execSync(`node ${ip}`, {env: process.env}).toString();
     console.log(result);
   } catch (err) {
