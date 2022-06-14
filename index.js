@@ -172,7 +172,7 @@ async function run() {
             const gstsrc = 'gstreamer_src';
             const prefix = '/usr';
             const opt = { cwd: `${process.cwd()}/${gstsrc}` };
-            const key = `${gitUrl}-${version}-${arch}-${distro.name}-${distro.versionId}`;
+            const key = `${gitUrl}-${version}-${arch}-${distro.name}-${distro.versionId}-${keyVersion}`;
             const cacheKey = await cache.restoreCache([gstsrc], key);
 
             if (!cacheKey) {
@@ -197,6 +197,7 @@ async function run() {
                 '-Dgpl=enabled',
                 'builddir'], opt);
               await exec.exec('meson', ['compile', '-C', 'builddir'], opt);
+
               await cache.saveCache([gstsrc], key);
 
               core.info(`New cache created for this key: "${key}"`);
