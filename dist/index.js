@@ -66584,8 +66584,8 @@ const DistroVersionPackageMap = {
       'flex',
       'bison'
     ]),
-    LinuxDistroCommand('pip3', [
-      'install', 'meson', 'ninja'
+    LinuxDistroCommand('sudo', [
+      'pip3', 'install', 'meson', 'ninja'
     ])
   ]) // end of linuxdistroconfig
 };
@@ -66679,6 +66679,8 @@ async function run() {
             // Come up with a unique key and attempt to fetch the cache under
             // that key.  If not found, clone, configure, build, and cache
             // the result before continuing.
+            // NOTE: Increment keyVersion if anything about the caching changes.
+            const keyVersion = 1;
             const gstsrc = 'gstreamer_src';
             const prefix = '/usr';
             const opt = { cwd: `${process.cwd()}/${gstsrc}` };
