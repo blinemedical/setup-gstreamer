@@ -6,17 +6,21 @@ This action installs GStreamer by leveraging the release binaries for a specific
 https://gstreamer.freedesktop.org/data/pkg/
 ```
 
-Supported runner environments are Windows and macOS.
+Tested runner environments are macOS, Windows, and Ubuntu 20.04.
 
 ## Inputs
 
 ### `version`
 
-The version of GStreamer to install.  The default is 1.20.2
+The version of GStreamer to install.  The default is `1.20.2`
 
 ### `arch`
 
-The architecture (`x86` or `x86_64`) of binaries to install.
+The architecture (`x86`, `x86_64`, etc.) of binaries to install.  Defaults to `x86_64`.
+
+### `repoUrl`
+
+The URL from where to clone the gstreamer source (Linux targets only).  Defaults to `https://gitlab.freedesktop.org/gstreamer/gstreamer.git`.
 
 ## Outputs
 
@@ -42,9 +46,6 @@ In this example, it is a Windows environment and we want to set the `GSTREAMER_.
   with:
     version: '1.19.90'
     arch: 'x86'
-- run: |
-    chcp 65001 #set code page to utf-8
-    echo ("GSTREAMER_1_0_ROOT_MSVC_X86=${{ steps.setup_gstreamer.outputs.gstreamerPath }}") >> $env:GITHUB_ENV
 - run: |
     echo $env:GSTREAMER_1_0_ROOT_MSVC_X86
 ```
