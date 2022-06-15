@@ -1,6 +1,7 @@
 const core = require('@actions/core');
 const exec = require('@actions/exec');
 const cache = require('@actions/cache');
+const github = require('@actions/github');
 const tc = require('@actions/tool-cache');
 const io = require('@actions/io');
 const semver = require('semver');
@@ -172,7 +173,7 @@ async function run() {
             const gstsrc = 'gstreamer_src';
             const prefix = '/usr';
             const opt = { cwd: `${process.cwd()}/${gstsrc}` };
-            const key = `${gitUrl}-${version}-${arch}-${distro.name}-${distro.versionId}-${keyVersion}`;
+            const key = `${github.context.repo.owner}-${github.context.repo.repo}-${gitUrl}-${version}-${arch}-${distro.name}-${distro.versionId}-${keyVersion}`;
             const cacheKey = await cache.restoreCache([gstsrc], key);
 
             if (!cacheKey) {
