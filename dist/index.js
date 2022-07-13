@@ -69685,6 +69685,13 @@ async function run() {
               await exec.exec(command.cmd, command.args, {env: config.env});
             }
 
+            let mesonVersion;
+            await exec.exec('meson', ['--version'], {
+              listeners: {
+                stdline: (line) => { mesonVersion = `meson-${line}`; }
+              }
+            });
+
             // Come up with a unique key and attempt to fetch the cache under
             // that key.  If not found, clone, configure, build, and cache
             // the result before continuing.
@@ -69693,7 +69700,7 @@ async function run() {
             const gstsrc = 'gstreamer_src';
             const prefix = '/usr';
             const opt = { cwd: `${process.cwd()}/${gstsrc}` };
-            const key = `${github.context.repo.owner}-${github.context.repo.repo}-${gitUrl}-${version}-${arch}-${distro.name}-${distro.versionId}-${keyVersion}`;
+            const key = `${github.context.repo.owner}-${github.context.repo.repo}-${gitUrl}-${version}-${arch}-${distro.name}-${distro.versionId}-${mesonVersion}-${keyVersion}`;
             const cacheKey = await cache.restoreCache([gstsrc], key);
 
             if (!cacheKey) {
