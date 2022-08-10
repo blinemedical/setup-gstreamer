@@ -689,6 +689,7 @@ const util = __importStar(__nccwpck_require__(3837));
 const utils = __importStar(__nccwpck_require__(1518));
 const constants_1 = __nccwpck_require__(8840);
 const requestUtils_1 = __nccwpck_require__(3981);
+const abort_controller_1 = __nccwpck_require__(2557);
 /**
  * Pipes the body of a HTTP response to a stream
  *
@@ -872,11 +873,16 @@ function downloadCacheStorageSDK(archiveLocation, archivePath, options) {
             const fd = fs.openSync(archivePath, 'w');
             try {
                 downloadProgress.startDisplayTimer();
+                const abortSignal = abort_controller_1.AbortController.timeout(options.segmentTimeoutInMs || 3600000);
+                abortSignal.addEventListener('abort', () => {
+                    core.warning('Aborting cache download as it exceeded the timeout.');
+                });
                 while (!downloadProgress.isDone()) {
                     const segmentStart = downloadProgress.segmentOffset + downloadProgress.segmentSize;
                     const segmentSize = Math.min(maxSegmentSize, contentLength - segmentStart);
                     downloadProgress.nextSegment(segmentSize);
                     const result = yield client.downloadToBuffer(segmentStart, segmentSize, {
+                        abortSignal,
                         concurrency: options.downloadConcurrency,
                         onProgress: downloadProgress.onProgress()
                     });
@@ -1241,7 +1247,8 @@ function getDownloadOptions(copy) {
     const result = {
         useAzureSdk: true,
         downloadConcurrency: 8,
-        timeoutInMs: 30000
+        timeoutInMs: 30000,
+        segmentTimeoutInMs: 3600000
     };
     if (copy) {
         if (typeof copy.useAzureSdk === 'boolean') {
@@ -1253,10 +1260,14 @@ function getDownloadOptions(copy) {
         if (typeof copy.timeoutInMs === 'number') {
             result.timeoutInMs = copy.timeoutInMs;
         }
+        if (typeof copy.segmentTimeoutInMs === 'number') {
+            result.segmentTimeoutInMs = copy.segmentTimeoutInMs;
+        }
     }
     core.debug(`Use Azure SDK: ${result.useAzureSdk}`);
     core.debug(`Download concurrency: ${result.downloadConcurrency}`);
     core.debug(`Request timeout (ms): ${result.timeoutInMs}`);
+    core.debug(`Segment download timeout (ms): ${result.segmentTimeoutInMs}`);
     return result;
 }
 exports.getDownloadOptions = getDownloadOptions;
@@ -11695,7 +11706,7 @@ const Constants = {
     /**
      * The core-http version
      */
-    coreHttpVersion: "2.2.5",
+    coreHttpVersion: "2.2.6",
     /**
      * Specifies HTTP.
      */
@@ -11996,6 +12007,7 @@ class Serializer {
      * @param mapper - The definition of data models.
      * @param value - The value.
      * @param objectName - Name of the object. Used in the error messages.
+     * @deprecated Removing the constraints validation on client side.
      */
     validateConstraints(mapper, value, objectName) {
         const failValidation = (constraintName, constraintValue) => {
@@ -12094,8 +12106,6 @@ class Serializer {
             payload = object;
         }
         else {
-            // Validate Constraints if any
-            this.validateConstraints(mapper, object, objectName);
             if (mapperType.match(/^any$/i) !== null) {
                 payload = object;
             }
@@ -20680,8 +20690,8 @@ class PollerStoppedError extends Error {
     }
 }
 /**
- * When a poller is cancelled through the `cancelOperation` method,
- * the poller will be rejected with an instance of the PollerCancelledError.
+ * When the operation is cancelled, the poller will be rejected with an instance
+ * of the PollerCancelledError.
  */
 class PollerCancelledError extends Error {
     constructor(message) {
@@ -20855,29 +20865,18 @@ class Poller {
      * @param options - Optional properties passed to the operation's update method.
      */
     async pollOnce(options = {}) {
-        try {
-            if (!this.isDone()) {
+        if (!this.isDone()) {
+            try {
                 this.operation = await this.operation.update({
                     abortSignal: options.abortSignal,
                     fireProgress: this.fireProgress.bind(this),
                 });
-                if (this.isDone() && this.resolve) {
-                    // If the poller has finished polling, this means we now have a result.
-                    // However, it can be the case that TResult is instantiated to void, so
-                    // we are not expecting a result anyway. To assert that we might not
-                    // have a result eventually after finishing polling, we cast the result
-                    // to TResult.
-                    this.resolve(this.operation.state.result);
-                }
+            }
+            catch (e) {
+                this.operation.state.error = e;
             }
         }
-        catch (e) {
-            this.operation.state.error = e;
-            if (this.reject) {
-                this.reject(e);
-            }
-            throw e;
-        }
+        this.processUpdatedState();
     }
     /**
      * fireProgress calls the functions passed in via onProgress the method of the poller.
@@ -20893,14 +20892,10 @@ class Poller {
         }
     }
     /**
-     * Invokes the underlying operation's cancel method, and rejects the
-     * pollUntilDone promise.
+     * Invokes the underlying operation's cancel method.
      */
     async cancelOnce(options = {}) {
         this.operation = await this.operation.cancel(options);
-        if (this.reject) {
-            this.reject(new PollerCancelledError("Poller cancelled"));
-        }
     }
     /**
      * Returns a promise that will resolve once a single polling request finishes.
@@ -20920,6 +20915,27 @@ class Poller {
         }
         return this.pollOncePromise;
     }
+    processUpdatedState() {
+        if (this.operation.state.error) {
+            this.stopped = true;
+            this.reject(this.operation.state.error);
+            throw this.operation.state.error;
+        }
+        if (this.operation.state.isCancelled) {
+            this.stopped = true;
+            const error = new PollerCancelledError("Poller cancelled");
+            this.reject(error);
+            throw error;
+        }
+        else if (this.isDone() && this.resolve) {
+            // If the poller has finished polling, this means we now have a result.
+            // However, it can be the case that TResult is instantiated to void, so
+            // we are not expecting a result anyway. To assert that we might not
+            // have a result eventually after finishing polling, we cast the result
+            // to TResult.
+            this.resolve(this.operation.state.result);
+        }
+    }
     /**
      * Returns a promise that will resolve once the underlying operation is completed.
      */
@@ -20927,6 +20943,9 @@ class Poller {
         if (this.stopped) {
             this.startPolling().catch(this.reject);
         }
+        // This is needed because the state could have been updated by
+        // `cancelOperation`, e.g. the operation is canceled or an error occurred.
+        this.processUpdatedState();
         return this.promise;
     }
     /**
@@ -20975,9 +20994,6 @@ class Poller {
      * @param options - Optional properties passed to the operation's update method.
      */
     cancelOperation(options = {}) {
-        if (!this.stopped) {
-            this.stopped = true;
-        }
         if (!this.cancelPromise) {
             this.cancelPromise = this.cancelOnce(options);
         }
@@ -21057,16 +21073,40 @@ class Poller {
 }
 
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
 /**
- * Detects where the continuation token is and returns it. Notice that azure-asyncoperation
- * must be checked first before the other location headers because there are scenarios
- * where both azure-asyncoperation and location could be present in the same response but
- * azure-asyncoperation should be the one to use for polling.
+ * The `@azure/logger` configuration for this package.
+ * @internal
  */
-function getPollingUrl(rawResponse, defaultPath) {
-    var _a, _b, _c;
-    return ((_c = (_b = (_a = getAzureAsyncOperation(rawResponse)) !== null && _a !== void 0 ? _a : getOperationLocation(rawResponse)) !== null && _b !== void 0 ? _b : getLocation(rawResponse)) !== null && _c !== void 0 ? _c : defaultPath);
+const logger = logger$1.createClientLogger("core-lro");
+
+// Copyright (c) Microsoft Corporation.
+function throwIfUndefined(input, options = {}) {
+    var _a;
+    if (input === undefined) {
+        throw new Error((_a = options.errorMessage) !== null && _a !== void 0 ? _a : "undefined variable");
+    }
+    return input;
+}
+function updatePollingUrl(inputs) {
+    var _a, _b;
+    const { info, rawResponse } = inputs;
+    switch (info.mode) {
+        case "OperationLocation": {
+            const operationLocation = getOperationLocation(rawResponse);
+            const azureAsyncOperation = getAzureAsyncOperation(rawResponse);
+            info.pollingUrl =
+                (_a = getOperationLocationPollingUrl({ operationLocation, azureAsyncOperation })) !== null && _a !== void 0 ? _a : throwIfUndefined(info.pollingUrl);
+            break;
+        }
+        case "ResourceLocation": {
+            info.pollingUrl = (_b = getLocation(rawResponse)) !== null && _b !== void 0 ? _b : throwIfUndefined(info.pollingUrl);
+            break;
+        }
+    }
+}
+function getOperationLocationPollingUrl(inputs) {
+    const { azureAsyncOperation, operationLocation } = inputs;
+    return operationLocation !== null && operationLocation !== void 0 ? operationLocation : azureAsyncOperation;
 }
 function getLocation(rawResponse) {
     return rawResponse.headers["location"];
@@ -21077,39 +21117,65 @@ function getOperationLocation(rawResponse) {
 function getAzureAsyncOperation(rawResponse) {
     return rawResponse.headers["azure-asyncoperation"];
 }
-function findResourceLocation(requestMethod, rawResponse, requestPath) {
+function findResourceLocation(inputs) {
+    const { location, requestMethod, requestPath, lroResourceLocationConfig } = inputs;
     switch (requestMethod) {
         case "PUT": {
             return requestPath;
         }
-        case "POST":
-        case "PATCH": {
-            return getLocation(rawResponse);
+        case "DELETE": {
+            return undefined;
         }
         default: {
-            return undefined;
+            switch (lroResourceLocationConfig) {
+                case "azure-async-operation": {
+                    return undefined;
+                }
+                case "original-uri": {
+                    return requestPath;
+                }
+                case "location":
+                default: {
+                    return location;
+                }
+            }
         }
     }
 }
-function inferLroMode(requestPath, requestMethod, rawResponse) {
-    if (getAzureAsyncOperation(rawResponse) !== undefined ||
-        getOperationLocation(rawResponse) !== undefined) {
+function inferLroMode(inputs) {
+    const { rawResponse, requestMethod, requestPath, lroResourceLocationConfig } = inputs;
+    const operationLocation = getOperationLocation(rawResponse);
+    const azureAsyncOperation = getAzureAsyncOperation(rawResponse);
+    const location = getLocation(rawResponse);
+    if (operationLocation !== undefined || azureAsyncOperation !== undefined) {
         return {
-            mode: "Location",
-            resourceLocation: findResourceLocation(requestMethod, rawResponse, requestPath),
+            mode: "OperationLocation",
+            pollingUrl: operationLocation !== null && operationLocation !== void 0 ? operationLocation : azureAsyncOperation,
+            resourceLocation: findResourceLocation({
+                requestMethod,
+                location,
+                requestPath,
+                lroResourceLocationConfig,
+            }),
         };
     }
-    else if (getLocation(rawResponse) !== undefined) {
+    else if (location !== undefined) {
         return {
-            mode: "Location",
+            mode: "ResourceLocation",
+            pollingUrl: location,
         };
     }
-    else if (["PUT", "PATCH"].includes(requestMethod)) {
+    else if (requestMethod === "PUT") {
         return {
             mode: "Body",
+            pollingUrl: requestPath,
         };
     }
-    return {};
+    else {
+        return {
+            mode: "None",
+        };
+    }
 }
 class SimpleRestError extends Error {
     constructor(message, statusCode) {
@@ -21119,121 +21185,85 @@ class SimpleRestError extends Error {
         Object.setPrototypeOf(this, SimpleRestError.prototype);
     }
 }
-function isUnexpectedInitialResponse(rawResponse) {
+function throwIfError(rawResponse) {
     const code = rawResponse.statusCode;
-    if (![203, 204, 202, 201, 200, 500].includes(code)) {
-        throw new SimpleRestError(`Received unexpected HTTP status code ${code} in the initial response. This may indicate a server issue.`, code);
-    }
-    return false;
-}
-function isUnexpectedPollingResponse(rawResponse) {
-    const code = rawResponse.statusCode;
-    if (![202, 201, 200, 500].includes(code)) {
+    if (code >= 400) {
         throw new SimpleRestError(`Received unexpected HTTP status code ${code} while polling. This may indicate a server issue.`, code);
     }
-    return false;
 }
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-const successStates = ["succeeded"];
-const failureStates = ["failed", "canceled", "cancelled"];
-
-// Copyright (c) Microsoft Corporation.
+function getStatus(rawResponse) {
+    var _a;
+    const { status } = (_a = rawResponse.body) !== null && _a !== void 0 ? _a : {};
+    return typeof status === "string" ? status.toLowerCase() : "succeeded";
+}
 function getProvisioningState(rawResponse) {
     var _a, _b;
     const { properties, provisioningState } = (_a = rawResponse.body) !== null && _a !== void 0 ? _a : {};
     const state = (_b = properties === null || properties === void 0 ? void 0 : properties.provisioningState) !== null && _b !== void 0 ? _b : provisioningState;
     return typeof state === "string" ? state.toLowerCase() : "succeeded";
 }
-function isBodyPollingDone(rawResponse) {
-    const state = getProvisioningState(rawResponse);
-    if (isUnexpectedPollingResponse(rawResponse) || failureStates.includes(state)) {
-        throw new Error(`The long running operation has failed. The provisioning state: ${state}.`);
+function isCanceled(operation) {
+    const { state, operationStatus } = operation;
+    if (["canceled", "cancelled"].includes(operationStatus)) {
+        state.isCancelled = true;
+        return true;
     }
-    return successStates.includes(state);
+    return false;
 }
-/**
- * Creates a polling strategy based on BodyPolling which uses the provisioning state
- * from the result to determine the current operation state
- */
-function processBodyPollingOperationResult(response) {
-    return Object.assign(Object.assign({}, response), { done: isBodyPollingDone(response.rawResponse) });
-}
-
-// Copyright (c) Microsoft Corporation.
-/**
- * The `@azure/logger` configuration for this package.
- * @internal
- */
-const logger = logger$1.createClientLogger("core-lro");
-
-// Copyright (c) Microsoft Corporation.
-function isPollingDone(rawResponse) {
-    var _a;
-    if (isUnexpectedPollingResponse(rawResponse) || rawResponse.statusCode === 202) {
-        return false;
+function isTerminal(operation) {
+    const { state, operationStatus } = operation;
+    if (operationStatus === "failed") {
+        throw new Error(`The long-running operation has failed.`);
     }
-    const { status } = (_a = rawResponse.body) !== null && _a !== void 0 ? _a : {};
-    const state = typeof status === "string" ? status.toLowerCase() : "succeeded";
-    if (isUnexpectedPollingResponse(rawResponse) || failureStates.includes(state)) {
-        throw new Error(`The long running operation has failed. The provisioning state: ${state}.`);
-    }
-    return successStates.includes(state);
+    return operationStatus === "succeeded" || isCanceled({ state, operationStatus });
 }
-/**
- * Sends a request to the URI of the provisioned resource if needed.
- */
-async function sendFinalRequest(lro, resourceLocation, lroResourceLocationConfig) {
-    switch (lroResourceLocationConfig) {
-        case "original-uri":
-            return lro.sendPollRequest(lro.requestPath);
-        case "azure-async-operation":
-            return undefined;
-        case "location":
-        default:
-            return lro.sendPollRequest(resourceLocation !== null && resourceLocation !== void 0 ? resourceLocation : lro.requestPath);
-    }
-}
-function processLocationPollingOperationResult(lro, resourceLocation, lroResourceLocationConfig) {
-    return (response) => {
-        if (isPollingDone(response.rawResponse)) {
-            if (resourceLocation === undefined) {
-                return Object.assign(Object.assign({}, response), { done: true });
-            }
-            else {
-                return Object.assign(Object.assign({}, response), { done: false, next: async () => {
-                        const finalResponse = await sendFinalRequest(lro, resourceLocation, lroResourceLocationConfig);
-                        return Object.assign(Object.assign({}, (finalResponse !== null && finalResponse !== void 0 ? finalResponse : response)), { done: true });
-                    } });
-            }
-        }
-        return Object.assign(Object.assign({}, response), { done: false });
-    };
-}
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-function processPassthroughOperationResult(response) {
-    return Object.assign(Object.assign({}, response), { done: true });
-}
-
-// Copyright (c) Microsoft Corporation.
-/**
- * creates a stepping function that maps an LRO state to another.
- */
-function createGetLroStatusFromResponse(lroPrimitives, config, lroResourceLocationConfig) {
-    switch (config.mode) {
-        case "Location": {
-            return processLocationPollingOperationResult(lroPrimitives, config.resourceLocation, lroResourceLocationConfig);
+function getOperationStatus(result) {
+    const { rawResponse, state, info, responseKind = "Polling" } = result;
+    throwIfError(rawResponse);
+    switch (info.mode) {
+        case "OperationLocation": {
+            const operationStatus = getStatus(rawResponse);
+            return {
+                operationStatus,
+                shouldStopPolling: responseKind === "Polling" && isTerminal({ state, operationStatus }),
+            };
         }
         case "Body": {
-            return processBodyPollingOperationResult;
+            const operationStatus = getProvisioningState(rawResponse);
+            return {
+                operationStatus,
+                shouldStopPolling: isTerminal({ state, operationStatus }),
+            };
         }
-        default: {
-            return processPassthroughOperationResult;
+        case "ResourceLocation": {
+            const operationStatus = rawResponse.statusCode;
+            return {
+                operationStatus,
+                shouldStopPolling: responseKind === "Polling" && operationStatus !== 202,
+            };
+        }
+        case "None": {
+            return {
+                shouldStopPolling: true,
+            };
         }
     }
+}
+function shouldStopPolling(result) {
+    const { rawResponse, state, info, responseKind = "Polling" } = result;
+    const { shouldStopPolling: isPollingStopped, operationStatus } = getOperationStatus({
+        info,
+        rawResponse,
+        state,
+        responseKind,
+    });
+    if (operationStatus) {
+        logger.verbose(`LRO: Status:\n\tPolling from: ${info.pollingUrl}\n\tOperation status: ${operationStatus}\n\tPolling status: ${isPollingStopped ? "Stopped" : "Running"}`);
+    }
+    else {
+        logger.verbose(`LRO: Status: Not an LRO`);
+    }
+    return isPollingStopped;
 }
 /**
  * Creates a polling operation.
@@ -21260,29 +21290,53 @@ function calculatePollingIntervalFromDate(retryAfterDate, defaultIntervalInMs) {
     }
     return defaultIntervalInMs;
 }
+function buildResult(inputs) {
+    const { processResult, response, state } = inputs;
+    return processResult ? processResult(response, state) : response;
+}
 /**
  * Creates a callback to be used to initialize the polling operation state.
- * @param state - of the polling operation
- * @param operationSpec - of the LRO
- * @param callback - callback to be called when the operation is done
- * @returns callback that initializes the state of the polling operation
  */
-function createInitializeState(state, requestPath, requestMethod) {
+function createStateInitializer(inputs) {
+    const { requestMethod, requestPath, state, lroResourceLocationConfig, processResult } = inputs;
     return (response) => {
-        if (isUnexpectedInitialResponse(response.rawResponse))
-            ;
-        state.initialRawResponse = response.rawResponse;
+        const { rawResponse } = response;
         state.isStarted = true;
-        state.pollingURL = getPollingUrl(state.initialRawResponse, requestPath);
-        state.config = inferLroMode(requestPath, requestMethod, state.initialRawResponse);
-        /** short circuit polling if body polling is done in the initial request */
-        if (state.config.mode === undefined ||
-            (state.config.mode === "Body" && isBodyPollingDone(state.initialRawResponse))) {
-            state.result = response.flatResponse;
+        state.config = inferLroMode({
+            rawResponse,
+            requestPath,
+            requestMethod,
+            lroResourceLocationConfig,
+        });
+        logger.verbose(`LRO: Operation description:`, state.config);
+        /** short circuit before polling */
+        if (shouldStopPolling({
+            rawResponse,
+            state,
+            info: state.config,
+            responseKind: "Initial",
+        })) {
+            state.result = buildResult({
+                response: response.flatResponse,
+                state: state,
+                processResult,
+            });
             state.isCompleted = true;
         }
-        logger.verbose(`LRO: initial state: ${JSON.stringify(state)}`);
-        return Boolean(state.isCompleted);
+    };
+}
+function createGetLroStatusFromResponse(inputs) {
+    const { lro, state, info } = inputs;
+    const location = info.resourceLocation;
+    return (response) => {
+        const isTerminalStatus = shouldStopPolling({
+            info,
+            rawResponse: response.rawResponse,
+            state,
+        });
+        return Object.assign(Object.assign({}, response), { done: isTerminalStatus && !location, next: !(isTerminalStatus && location)
+                ? undefined
+                : () => lro.sendPollRequest(location).then((res) => (Object.assign(Object.assign({}, res), { done: true }))) });
     };
 }
 
@@ -21319,39 +21373,53 @@ class GenericPollOperation {
         const state = this.state;
         let lastResponse = undefined;
         if (!state.isStarted) {
-            const initializeState = createInitializeState(state, this.lro.requestPath, this.lro.requestMethod);
+            const initializeState = createStateInitializer({
+                state,
+                requestPath: this.lro.requestPath,
+                requestMethod: this.lro.requestMethod,
+                lroResourceLocationConfig: this.lroResourceLocationConfig,
+                processResult: this.processResult,
+            });
             lastResponse = await this.lro.sendInitialRequest();
             initializeState(lastResponse);
         }
         if (!state.isCompleted) {
-            if (!this.poll || !this.getLroStatusFromResponse) {
-                if (!state.config) {
-                    throw new Error("Bad state: LRO mode is undefined. Please check if the serialized state is well-formed.");
-                }
+            const config = throwIfUndefined(state.config, {
+                errorMessage: "Bad state: LRO mode is undefined. Check if the serialized state is well-formed.",
+            });
+            if (!this.poll) {
+                this.poll = createPoll(this.lro);
+            }
+            if (!this.getLroStatusFromResponse) {
                 const isDone = this.isDone;
                 this.getLroStatusFromResponse = isDone
                     ? (response) => (Object.assign(Object.assign({}, response), { done: isDone(response.flatResponse, this.state) }))
-                    : createGetLroStatusFromResponse(this.lro, state.config, this.lroResourceLocationConfig);
-                this.poll = createPoll(this.lro);
+                    : createGetLroStatusFromResponse({
+                        lro: this.lro,
+                        info: config,
+                        state: this.state,
+                    });
             }
-            if (!state.pollingURL) {
-                throw new Error("Bad state: polling URL is undefined. Please check if the serialized state is well-formed.");
-            }
-            const currentState = await this.poll(state.pollingURL, this.pollerConfig, this.getLroStatusFromResponse);
-            logger.verbose(`LRO: polling response: ${JSON.stringify(currentState.rawResponse)}`);
+            const currentState = await this.poll(throwIfUndefined(config.pollingUrl), this.pollerConfig, this.getLroStatusFromResponse);
             if (currentState.done) {
-                state.result = this.processResult
-                    ? this.processResult(currentState.flatResponse, state)
-                    : currentState.flatResponse;
+                state.result = buildResult({
+                    response: currentState.flatResponse,
+                    state,
+                    processResult: this.processResult,
+                });
                 state.isCompleted = true;
             }
             else {
                 this.poll = (_a = currentState.next) !== null && _a !== void 0 ? _a : this.poll;
-                state.pollingURL = getPollingUrl(currentState.rawResponse, state.pollingURL);
+                updatePollingUrl({
+                    rawResponse: currentState.rawResponse,
+                    info: config,
+                });
+                /** for backward compatability */
+                state.pollingURL = config.pollingUrl;
             }
             lastResponse = currentState;
         }
-        logger.verbose(`LRO: current state: ${JSON.stringify(state)}`);
         if (lastResponse) {
             (_b = this.updateState) === null || _b === void 0 ? void 0 : _b.call(this, state, lastResponse === null || lastResponse === void 0 ? void 0 : lastResponse.rawResponse);
         }
@@ -21362,7 +21430,7 @@ class GenericPollOperation {
         return this;
     }
     async cancel() {
-        this.state.isCancelled = true;
+        logger.error("`cancelOperation` is deprecated because it wasn't implemented");
         return this;
     }
     /**
