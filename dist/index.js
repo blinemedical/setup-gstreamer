@@ -23,7 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core = __importStar(__nccwpck_require__(2186));
+const core = __importStar(__nccwpck_require__(448));
 const path = __importStar(__nccwpck_require__(1017));
 const utils = __importStar(__nccwpck_require__(1518));
 const cacheHttpClient = __importStar(__nccwpck_require__(8245));
@@ -240,7 +240,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core = __importStar(__nccwpck_require__(2186));
+const core = __importStar(__nccwpck_require__(448));
 const http_client_1 = __nccwpck_require__(6255);
 const auth_1 = __nccwpck_require__(5526);
 const crypto = __importStar(__nccwpck_require__(6113));
@@ -467,7 +467,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core = __importStar(__nccwpck_require__(2186));
+const core = __importStar(__nccwpck_require__(448));
 const exec = __importStar(__nccwpck_require__(1514));
 const glob = __importStar(__nccwpck_require__(8090));
 const io = __importStar(__nccwpck_require__(7436));
@@ -679,7 +679,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core = __importStar(__nccwpck_require__(2186));
+const core = __importStar(__nccwpck_require__(448));
 const http_client_1 = __nccwpck_require__(6255);
 const storage_blob_1 = __nccwpck_require__(4100);
 const buffer = __importStar(__nccwpck_require__(4300));
@@ -937,7 +937,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core = __importStar(__nccwpck_require__(2186));
+const core = __importStar(__nccwpck_require__(448));
 const http_client_1 = __nccwpck_require__(6255);
 const constants_1 = __nccwpck_require__(8840);
 function isSuccessStatusCode(statusCode) {
@@ -1224,7 +1224,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core = __importStar(__nccwpck_require__(2186));
+const core = __importStar(__nccwpck_require__(448));
 /**
  * Returns a copy of the upload options with defaults filled in.
  *
@@ -1289,6 +1289,1645 @@ function getDownloadOptions(copy) {
 }
 exports.getDownloadOptions = getDownloadOptions;
 //# sourceMappingURL=options.js.map
+
+/***/ }),
+
+/***/ 4924:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.issue = exports.issueCommand = void 0;
+const os = __importStar(__nccwpck_require__(2037));
+const utils_1 = __nccwpck_require__(9838);
+/**
+ * Commands
+ *
+ * Command Format:
+ *   ::name key=value,key=value::message
+ *
+ * Examples:
+ *   ::warning::This is the message
+ *   ::set-env name=MY_VAR::some value
+ */
+function issueCommand(command, properties, message) {
+    const cmd = new Command(command, properties, message);
+    process.stdout.write(cmd.toString() + os.EOL);
+}
+exports.issueCommand = issueCommand;
+function issue(name, message = '') {
+    issueCommand(name, {}, message);
+}
+exports.issue = issue;
+const CMD_STRING = '::';
+class Command {
+    constructor(command, properties, message) {
+        if (!command) {
+            command = 'missing.command';
+        }
+        this.command = command;
+        this.properties = properties;
+        this.message = message;
+    }
+    toString() {
+        let cmdStr = CMD_STRING + this.command;
+        if (this.properties && Object.keys(this.properties).length > 0) {
+            cmdStr += ' ';
+            let first = true;
+            for (const key in this.properties) {
+                if (this.properties.hasOwnProperty(key)) {
+                    const val = this.properties[key];
+                    if (val) {
+                        if (first) {
+                            first = false;
+                        }
+                        else {
+                            cmdStr += ',';
+                        }
+                        cmdStr += `${key}=${escapeProperty(val)}`;
+                    }
+                }
+            }
+        }
+        cmdStr += `${CMD_STRING}${escapeData(this.message)}`;
+        return cmdStr;
+    }
+}
+function escapeData(s) {
+    return utils_1.toCommandValue(s)
+        .replace(/%/g, '%25')
+        .replace(/\r/g, '%0D')
+        .replace(/\n/g, '%0A');
+}
+function escapeProperty(s) {
+    return utils_1.toCommandValue(s)
+        .replace(/%/g, '%25')
+        .replace(/\r/g, '%0D')
+        .replace(/\n/g, '%0A')
+        .replace(/:/g, '%3A')
+        .replace(/,/g, '%2C');
+}
+//# sourceMappingURL=command.js.map
+
+/***/ }),
+
+/***/ 448:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getIDToken = exports.getState = exports.saveState = exports.group = exports.endGroup = exports.startGroup = exports.info = exports.notice = exports.warning = exports.error = exports.debug = exports.isDebug = exports.setFailed = exports.setCommandEcho = exports.setOutput = exports.getBooleanInput = exports.getMultilineInput = exports.getInput = exports.addPath = exports.setSecret = exports.exportVariable = exports.ExitCode = void 0;
+const command_1 = __nccwpck_require__(4924);
+const file_command_1 = __nccwpck_require__(8542);
+const utils_1 = __nccwpck_require__(9838);
+const os = __importStar(__nccwpck_require__(2037));
+const path = __importStar(__nccwpck_require__(1017));
+const oidc_utils_1 = __nccwpck_require__(56);
+/**
+ * The code to exit an action
+ */
+var ExitCode;
+(function (ExitCode) {
+    /**
+     * A code indicating that the action was successful
+     */
+    ExitCode[ExitCode["Success"] = 0] = "Success";
+    /**
+     * A code indicating that the action was a failure
+     */
+    ExitCode[ExitCode["Failure"] = 1] = "Failure";
+})(ExitCode = exports.ExitCode || (exports.ExitCode = {}));
+//-----------------------------------------------------------------------
+// Variables
+//-----------------------------------------------------------------------
+/**
+ * Sets env variable for this action and future actions in the job
+ * @param name the name of the variable to set
+ * @param val the value of the variable. Non-string values will be converted to a string via JSON.stringify
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function exportVariable(name, val) {
+    const convertedVal = utils_1.toCommandValue(val);
+    process.env[name] = convertedVal;
+    const filePath = process.env['GITHUB_ENV'] || '';
+    if (filePath) {
+        return file_command_1.issueFileCommand('ENV', file_command_1.prepareKeyValueMessage(name, val));
+    }
+    command_1.issueCommand('set-env', { name }, convertedVal);
+}
+exports.exportVariable = exportVariable;
+/**
+ * Registers a secret which will get masked from logs
+ * @param secret value of the secret
+ */
+function setSecret(secret) {
+    command_1.issueCommand('add-mask', {}, secret);
+}
+exports.setSecret = setSecret;
+/**
+ * Prepends inputPath to the PATH (for this action and future actions)
+ * @param inputPath
+ */
+function addPath(inputPath) {
+    const filePath = process.env['GITHUB_PATH'] || '';
+    if (filePath) {
+        file_command_1.issueFileCommand('PATH', inputPath);
+    }
+    else {
+        command_1.issueCommand('add-path', {}, inputPath);
+    }
+    process.env['PATH'] = `${inputPath}${path.delimiter}${process.env['PATH']}`;
+}
+exports.addPath = addPath;
+/**
+ * Gets the value of an input.
+ * Unless trimWhitespace is set to false in InputOptions, the value is also trimmed.
+ * Returns an empty string if the value is not defined.
+ *
+ * @param     name     name of the input to get
+ * @param     options  optional. See InputOptions.
+ * @returns   string
+ */
+function getInput(name, options) {
+    const val = process.env[`INPUT_${name.replace(/ /g, '_').toUpperCase()}`] || '';
+    if (options && options.required && !val) {
+        throw new Error(`Input required and not supplied: ${name}`);
+    }
+    if (options && options.trimWhitespace === false) {
+        return val;
+    }
+    return val.trim();
+}
+exports.getInput = getInput;
+/**
+ * Gets the values of an multiline input.  Each value is also trimmed.
+ *
+ * @param     name     name of the input to get
+ * @param     options  optional. See InputOptions.
+ * @returns   string[]
+ *
+ */
+function getMultilineInput(name, options) {
+    const inputs = getInput(name, options)
+        .split('\n')
+        .filter(x => x !== '');
+    if (options && options.trimWhitespace === false) {
+        return inputs;
+    }
+    return inputs.map(input => input.trim());
+}
+exports.getMultilineInput = getMultilineInput;
+/**
+ * Gets the input value of the boolean type in the YAML 1.2 "core schema" specification.
+ * Support boolean input list: `true | True | TRUE | false | False | FALSE` .
+ * The return value is also in boolean type.
+ * ref: https://yaml.org/spec/1.2/spec.html#id2804923
+ *
+ * @param     name     name of the input to get
+ * @param     options  optional. See InputOptions.
+ * @returns   boolean
+ */
+function getBooleanInput(name, options) {
+    const trueValue = ['true', 'True', 'TRUE'];
+    const falseValue = ['false', 'False', 'FALSE'];
+    const val = getInput(name, options);
+    if (trueValue.includes(val))
+        return true;
+    if (falseValue.includes(val))
+        return false;
+    throw new TypeError(`Input does not meet YAML 1.2 "Core Schema" specification: ${name}\n` +
+        `Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
+}
+exports.getBooleanInput = getBooleanInput;
+/**
+ * Sets the value of an output.
+ *
+ * @param     name     name of the output to set
+ * @param     value    value to store. Non-string values will be converted to a string via JSON.stringify
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function setOutput(name, value) {
+    const filePath = process.env['GITHUB_OUTPUT'] || '';
+    if (filePath) {
+        return file_command_1.issueFileCommand('OUTPUT', file_command_1.prepareKeyValueMessage(name, value));
+    }
+    process.stdout.write(os.EOL);
+    command_1.issueCommand('set-output', { name }, utils_1.toCommandValue(value));
+}
+exports.setOutput = setOutput;
+/**
+ * Enables or disables the echoing of commands into stdout for the rest of the step.
+ * Echoing is disabled by default if ACTIONS_STEP_DEBUG is not set.
+ *
+ */
+function setCommandEcho(enabled) {
+    command_1.issue('echo', enabled ? 'on' : 'off');
+}
+exports.setCommandEcho = setCommandEcho;
+//-----------------------------------------------------------------------
+// Results
+//-----------------------------------------------------------------------
+/**
+ * Sets the action status to failed.
+ * When the action exits it will be with an exit code of 1
+ * @param message add error issue message
+ */
+function setFailed(message) {
+    process.exitCode = ExitCode.Failure;
+    error(message);
+}
+exports.setFailed = setFailed;
+//-----------------------------------------------------------------------
+// Logging Commands
+//-----------------------------------------------------------------------
+/**
+ * Gets whether Actions Step Debug is on or not
+ */
+function isDebug() {
+    return process.env['RUNNER_DEBUG'] === '1';
+}
+exports.isDebug = isDebug;
+/**
+ * Writes debug message to user log
+ * @param message debug message
+ */
+function debug(message) {
+    command_1.issueCommand('debug', {}, message);
+}
+exports.debug = debug;
+/**
+ * Adds an error issue
+ * @param message error issue message. Errors will be converted to string via toString()
+ * @param properties optional properties to add to the annotation.
+ */
+function error(message, properties = {}) {
+    command_1.issueCommand('error', utils_1.toCommandProperties(properties), message instanceof Error ? message.toString() : message);
+}
+exports.error = error;
+/**
+ * Adds a warning issue
+ * @param message warning issue message. Errors will be converted to string via toString()
+ * @param properties optional properties to add to the annotation.
+ */
+function warning(message, properties = {}) {
+    command_1.issueCommand('warning', utils_1.toCommandProperties(properties), message instanceof Error ? message.toString() : message);
+}
+exports.warning = warning;
+/**
+ * Adds a notice issue
+ * @param message notice issue message. Errors will be converted to string via toString()
+ * @param properties optional properties to add to the annotation.
+ */
+function notice(message, properties = {}) {
+    command_1.issueCommand('notice', utils_1.toCommandProperties(properties), message instanceof Error ? message.toString() : message);
+}
+exports.notice = notice;
+/**
+ * Writes info to log with console.log.
+ * @param message info message
+ */
+function info(message) {
+    process.stdout.write(message + os.EOL);
+}
+exports.info = info;
+/**
+ * Begin an output group.
+ *
+ * Output until the next `groupEnd` will be foldable in this group
+ *
+ * @param name The name of the output group
+ */
+function startGroup(name) {
+    command_1.issue('group', name);
+}
+exports.startGroup = startGroup;
+/**
+ * End an output group.
+ */
+function endGroup() {
+    command_1.issue('endgroup');
+}
+exports.endGroup = endGroup;
+/**
+ * Wrap an asynchronous function call in a group.
+ *
+ * Returns the same type as the function itself.
+ *
+ * @param name The name of the group
+ * @param fn The function to wrap in the group
+ */
+function group(name, fn) {
+    return __awaiter(this, void 0, void 0, function* () {
+        startGroup(name);
+        let result;
+        try {
+            result = yield fn();
+        }
+        finally {
+            endGroup();
+        }
+        return result;
+    });
+}
+exports.group = group;
+//-----------------------------------------------------------------------
+// Wrapper action state
+//-----------------------------------------------------------------------
+/**
+ * Saves state for current action, the state can only be retrieved by this action's post job execution.
+ *
+ * @param     name     name of the state to store
+ * @param     value    value to store. Non-string values will be converted to a string via JSON.stringify
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function saveState(name, value) {
+    const filePath = process.env['GITHUB_STATE'] || '';
+    if (filePath) {
+        return file_command_1.issueFileCommand('STATE', file_command_1.prepareKeyValueMessage(name, value));
+    }
+    command_1.issueCommand('save-state', { name }, utils_1.toCommandValue(value));
+}
+exports.saveState = saveState;
+/**
+ * Gets the value of an state set by this action's main execution.
+ *
+ * @param     name     name of the state to get
+ * @returns   string
+ */
+function getState(name) {
+    return process.env[`STATE_${name}`] || '';
+}
+exports.getState = getState;
+function getIDToken(aud) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return yield oidc_utils_1.OidcClient.getIDToken(aud);
+    });
+}
+exports.getIDToken = getIDToken;
+/**
+ * Summary exports
+ */
+var summary_1 = __nccwpck_require__(6745);
+Object.defineProperty(exports, "summary", ({ enumerable: true, get: function () { return summary_1.summary; } }));
+/**
+ * @deprecated use core.summary
+ */
+var summary_2 = __nccwpck_require__(6745);
+Object.defineProperty(exports, "markdownSummary", ({ enumerable: true, get: function () { return summary_2.markdownSummary; } }));
+/**
+ * Path exports
+ */
+var path_utils_1 = __nccwpck_require__(3076);
+Object.defineProperty(exports, "toPosixPath", ({ enumerable: true, get: function () { return path_utils_1.toPosixPath; } }));
+Object.defineProperty(exports, "toWin32Path", ({ enumerable: true, get: function () { return path_utils_1.toWin32Path; } }));
+Object.defineProperty(exports, "toPlatformPath", ({ enumerable: true, get: function () { return path_utils_1.toPlatformPath; } }));
+//# sourceMappingURL=core.js.map
+
+/***/ }),
+
+/***/ 8542:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+// For internal use, subject to change.
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.prepareKeyValueMessage = exports.issueFileCommand = void 0;
+// We use any as a valid input type
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const fs = __importStar(__nccwpck_require__(7147));
+const os = __importStar(__nccwpck_require__(2037));
+const uuid_1 = __nccwpck_require__(1400);
+const utils_1 = __nccwpck_require__(9838);
+function issueFileCommand(command, message) {
+    const filePath = process.env[`GITHUB_${command}`];
+    if (!filePath) {
+        throw new Error(`Unable to find environment variable for file command ${command}`);
+    }
+    if (!fs.existsSync(filePath)) {
+        throw new Error(`Missing file at path: ${filePath}`);
+    }
+    fs.appendFileSync(filePath, `${utils_1.toCommandValue(message)}${os.EOL}`, {
+        encoding: 'utf8'
+    });
+}
+exports.issueFileCommand = issueFileCommand;
+function prepareKeyValueMessage(key, value) {
+    const delimiter = `ghadelimiter_${uuid_1.v4()}`;
+    const convertedValue = utils_1.toCommandValue(value);
+    // These should realistically never happen, but just in case someone finds a
+    // way to exploit uuid generation let's not allow keys or values that contain
+    // the delimiter.
+    if (key.includes(delimiter)) {
+        throw new Error(`Unexpected input: name should not contain the delimiter "${delimiter}"`);
+    }
+    if (convertedValue.includes(delimiter)) {
+        throw new Error(`Unexpected input: value should not contain the delimiter "${delimiter}"`);
+    }
+    return `${key}<<${delimiter}${os.EOL}${convertedValue}${os.EOL}${delimiter}`;
+}
+exports.prepareKeyValueMessage = prepareKeyValueMessage;
+//# sourceMappingURL=file-command.js.map
+
+/***/ }),
+
+/***/ 56:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.OidcClient = void 0;
+const http_client_1 = __nccwpck_require__(6255);
+const auth_1 = __nccwpck_require__(5526);
+const core_1 = __nccwpck_require__(448);
+class OidcClient {
+    static createHttpClient(allowRetry = true, maxRetry = 10) {
+        const requestOptions = {
+            allowRetries: allowRetry,
+            maxRetries: maxRetry
+        };
+        return new http_client_1.HttpClient('actions/oidc-client', [new auth_1.BearerCredentialHandler(OidcClient.getRequestToken())], requestOptions);
+    }
+    static getRequestToken() {
+        const token = process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN'];
+        if (!token) {
+            throw new Error('Unable to get ACTIONS_ID_TOKEN_REQUEST_TOKEN env variable');
+        }
+        return token;
+    }
+    static getIDTokenUrl() {
+        const runtimeUrl = process.env['ACTIONS_ID_TOKEN_REQUEST_URL'];
+        if (!runtimeUrl) {
+            throw new Error('Unable to get ACTIONS_ID_TOKEN_REQUEST_URL env variable');
+        }
+        return runtimeUrl;
+    }
+    static getCall(id_token_url) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            const httpclient = OidcClient.createHttpClient();
+            const res = yield httpclient
+                .getJson(id_token_url)
+                .catch(error => {
+                throw new Error(`Failed to get ID Token. \n 
+        Error Code : ${error.statusCode}\n 
+        Error Message: ${error.result.message}`);
+            });
+            const id_token = (_a = res.result) === null || _a === void 0 ? void 0 : _a.value;
+            if (!id_token) {
+                throw new Error('Response json body do not have ID Token field');
+            }
+            return id_token;
+        });
+    }
+    static getIDToken(audience) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                // New ID Token is requested from action service
+                let id_token_url = OidcClient.getIDTokenUrl();
+                if (audience) {
+                    const encodedAudience = encodeURIComponent(audience);
+                    id_token_url = `${id_token_url}&audience=${encodedAudience}`;
+                }
+                core_1.debug(`ID token url is ${id_token_url}`);
+                const id_token = yield OidcClient.getCall(id_token_url);
+                core_1.setSecret(id_token);
+                return id_token;
+            }
+            catch (error) {
+                throw new Error(`Error message: ${error.message}`);
+            }
+        });
+    }
+}
+exports.OidcClient = OidcClient;
+//# sourceMappingURL=oidc-utils.js.map
+
+/***/ }),
+
+/***/ 3076:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.toPlatformPath = exports.toWin32Path = exports.toPosixPath = void 0;
+const path = __importStar(__nccwpck_require__(1017));
+/**
+ * toPosixPath converts the given path to the posix form. On Windows, \\ will be
+ * replaced with /.
+ *
+ * @param pth. Path to transform.
+ * @return string Posix path.
+ */
+function toPosixPath(pth) {
+    return pth.replace(/[\\]/g, '/');
+}
+exports.toPosixPath = toPosixPath;
+/**
+ * toWin32Path converts the given path to the win32 form. On Linux, / will be
+ * replaced with \\.
+ *
+ * @param pth. Path to transform.
+ * @return string Win32 path.
+ */
+function toWin32Path(pth) {
+    return pth.replace(/[/]/g, '\\');
+}
+exports.toWin32Path = toWin32Path;
+/**
+ * toPlatformPath converts the given path to a platform-specific path. It does
+ * this by replacing instances of / and \ with the platform-specific path
+ * separator.
+ *
+ * @param pth The path to platformize.
+ * @return string The platform-specific path.
+ */
+function toPlatformPath(pth) {
+    return pth.replace(/[/\\]/g, path.sep);
+}
+exports.toPlatformPath = toPlatformPath;
+//# sourceMappingURL=path-utils.js.map
+
+/***/ }),
+
+/***/ 6745:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.summary = exports.markdownSummary = exports.SUMMARY_DOCS_URL = exports.SUMMARY_ENV_VAR = void 0;
+const os_1 = __nccwpck_require__(2037);
+const fs_1 = __nccwpck_require__(7147);
+const { access, appendFile, writeFile } = fs_1.promises;
+exports.SUMMARY_ENV_VAR = 'GITHUB_STEP_SUMMARY';
+exports.SUMMARY_DOCS_URL = 'https://docs.github.com/actions/using-workflows/workflow-commands-for-github-actions#adding-a-job-summary';
+class Summary {
+    constructor() {
+        this._buffer = '';
+    }
+    /**
+     * Finds the summary file path from the environment, rejects if env var is not found or file does not exist
+     * Also checks r/w permissions.
+     *
+     * @returns step summary file path
+     */
+    filePath() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this._filePath) {
+                return this._filePath;
+            }
+            const pathFromEnv = process.env[exports.SUMMARY_ENV_VAR];
+            if (!pathFromEnv) {
+                throw new Error(`Unable to find environment variable for $${exports.SUMMARY_ENV_VAR}. Check if your runtime environment supports job summaries.`);
+            }
+            try {
+                yield access(pathFromEnv, fs_1.constants.R_OK | fs_1.constants.W_OK);
+            }
+            catch (_a) {
+                throw new Error(`Unable to access summary file: '${pathFromEnv}'. Check if the file has correct read/write permissions.`);
+            }
+            this._filePath = pathFromEnv;
+            return this._filePath;
+        });
+    }
+    /**
+     * Wraps content in an HTML tag, adding any HTML attributes
+     *
+     * @param {string} tag HTML tag to wrap
+     * @param {string | null} content content within the tag
+     * @param {[attribute: string]: string} attrs key-value list of HTML attributes to add
+     *
+     * @returns {string} content wrapped in HTML element
+     */
+    wrap(tag, content, attrs = {}) {
+        const htmlAttrs = Object.entries(attrs)
+            .map(([key, value]) => ` ${key}="${value}"`)
+            .join('');
+        if (!content) {
+            return `<${tag}${htmlAttrs}>`;
+        }
+        return `<${tag}${htmlAttrs}>${content}</${tag}>`;
+    }
+    /**
+     * Writes text in the buffer to the summary buffer file and empties buffer. Will append by default.
+     *
+     * @param {SummaryWriteOptions} [options] (optional) options for write operation
+     *
+     * @returns {Promise<Summary>} summary instance
+     */
+    write(options) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const overwrite = !!(options === null || options === void 0 ? void 0 : options.overwrite);
+            const filePath = yield this.filePath();
+            const writeFunc = overwrite ? writeFile : appendFile;
+            yield writeFunc(filePath, this._buffer, { encoding: 'utf8' });
+            return this.emptyBuffer();
+        });
+    }
+    /**
+     * Clears the summary buffer and wipes the summary file
+     *
+     * @returns {Summary} summary instance
+     */
+    clear() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.emptyBuffer().write({ overwrite: true });
+        });
+    }
+    /**
+     * Returns the current summary buffer as a string
+     *
+     * @returns {string} string of summary buffer
+     */
+    stringify() {
+        return this._buffer;
+    }
+    /**
+     * If the summary buffer is empty
+     *
+     * @returns {boolen} true if the buffer is empty
+     */
+    isEmptyBuffer() {
+        return this._buffer.length === 0;
+    }
+    /**
+     * Resets the summary buffer without writing to summary file
+     *
+     * @returns {Summary} summary instance
+     */
+    emptyBuffer() {
+        this._buffer = '';
+        return this;
+    }
+    /**
+     * Adds raw text to the summary buffer
+     *
+     * @param {string} text content to add
+     * @param {boolean} [addEOL=false] (optional) append an EOL to the raw text (default: false)
+     *
+     * @returns {Summary} summary instance
+     */
+    addRaw(text, addEOL = false) {
+        this._buffer += text;
+        return addEOL ? this.addEOL() : this;
+    }
+    /**
+     * Adds the operating system-specific end-of-line marker to the buffer
+     *
+     * @returns {Summary} summary instance
+     */
+    addEOL() {
+        return this.addRaw(os_1.EOL);
+    }
+    /**
+     * Adds an HTML codeblock to the summary buffer
+     *
+     * @param {string} code content to render within fenced code block
+     * @param {string} lang (optional) language to syntax highlight code
+     *
+     * @returns {Summary} summary instance
+     */
+    addCodeBlock(code, lang) {
+        const attrs = Object.assign({}, (lang && { lang }));
+        const element = this.wrap('pre', this.wrap('code', code), attrs);
+        return this.addRaw(element).addEOL();
+    }
+    /**
+     * Adds an HTML list to the summary buffer
+     *
+     * @param {string[]} items list of items to render
+     * @param {boolean} [ordered=false] (optional) if the rendered list should be ordered or not (default: false)
+     *
+     * @returns {Summary} summary instance
+     */
+    addList(items, ordered = false) {
+        const tag = ordered ? 'ol' : 'ul';
+        const listItems = items.map(item => this.wrap('li', item)).join('');
+        const element = this.wrap(tag, listItems);
+        return this.addRaw(element).addEOL();
+    }
+    /**
+     * Adds an HTML table to the summary buffer
+     *
+     * @param {SummaryTableCell[]} rows table rows
+     *
+     * @returns {Summary} summary instance
+     */
+    addTable(rows) {
+        const tableBody = rows
+            .map(row => {
+            const cells = row
+                .map(cell => {
+                if (typeof cell === 'string') {
+                    return this.wrap('td', cell);
+                }
+                const { header, data, colspan, rowspan } = cell;
+                const tag = header ? 'th' : 'td';
+                const attrs = Object.assign(Object.assign({}, (colspan && { colspan })), (rowspan && { rowspan }));
+                return this.wrap(tag, data, attrs);
+            })
+                .join('');
+            return this.wrap('tr', cells);
+        })
+            .join('');
+        const element = this.wrap('table', tableBody);
+        return this.addRaw(element).addEOL();
+    }
+    /**
+     * Adds a collapsable HTML details element to the summary buffer
+     *
+     * @param {string} label text for the closed state
+     * @param {string} content collapsable content
+     *
+     * @returns {Summary} summary instance
+     */
+    addDetails(label, content) {
+        const element = this.wrap('details', this.wrap('summary', label) + content);
+        return this.addRaw(element).addEOL();
+    }
+    /**
+     * Adds an HTML image tag to the summary buffer
+     *
+     * @param {string} src path to the image you to embed
+     * @param {string} alt text description of the image
+     * @param {SummaryImageOptions} options (optional) addition image attributes
+     *
+     * @returns {Summary} summary instance
+     */
+    addImage(src, alt, options) {
+        const { width, height } = options || {};
+        const attrs = Object.assign(Object.assign({}, (width && { width })), (height && { height }));
+        const element = this.wrap('img', null, Object.assign({ src, alt }, attrs));
+        return this.addRaw(element).addEOL();
+    }
+    /**
+     * Adds an HTML section heading element
+     *
+     * @param {string} text heading text
+     * @param {number | string} [level=1] (optional) the heading level, default: 1
+     *
+     * @returns {Summary} summary instance
+     */
+    addHeading(text, level) {
+        const tag = `h${level}`;
+        const allowedTag = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tag)
+            ? tag
+            : 'h1';
+        const element = this.wrap(allowedTag, text);
+        return this.addRaw(element).addEOL();
+    }
+    /**
+     * Adds an HTML thematic break (<hr>) to the summary buffer
+     *
+     * @returns {Summary} summary instance
+     */
+    addSeparator() {
+        const element = this.wrap('hr', null);
+        return this.addRaw(element).addEOL();
+    }
+    /**
+     * Adds an HTML line break (<br>) to the summary buffer
+     *
+     * @returns {Summary} summary instance
+     */
+    addBreak() {
+        const element = this.wrap('br', null);
+        return this.addRaw(element).addEOL();
+    }
+    /**
+     * Adds an HTML blockquote to the summary buffer
+     *
+     * @param {string} text quote text
+     * @param {string} cite (optional) citation url
+     *
+     * @returns {Summary} summary instance
+     */
+    addQuote(text, cite) {
+        const attrs = Object.assign({}, (cite && { cite }));
+        const element = this.wrap('blockquote', text, attrs);
+        return this.addRaw(element).addEOL();
+    }
+    /**
+     * Adds an HTML anchor tag to the summary buffer
+     *
+     * @param {string} text link text/content
+     * @param {string} href hyperlink
+     *
+     * @returns {Summary} summary instance
+     */
+    addLink(text, href) {
+        const element = this.wrap('a', text, { href });
+        return this.addRaw(element).addEOL();
+    }
+}
+const _summary = new Summary();
+/**
+ * @deprecated use `core.summary`
+ */
+exports.markdownSummary = _summary;
+exports.summary = _summary;
+//# sourceMappingURL=summary.js.map
+
+/***/ }),
+
+/***/ 9838:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+// We use any as a valid input type
+/* eslint-disable @typescript-eslint/no-explicit-any */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.toCommandProperties = exports.toCommandValue = void 0;
+/**
+ * Sanitizes an input into a string so it can be passed into issueCommand safely
+ * @param input input to sanitize into a string
+ */
+function toCommandValue(input) {
+    if (input === null || input === undefined) {
+        return '';
+    }
+    else if (typeof input === 'string' || input instanceof String) {
+        return input;
+    }
+    return JSON.stringify(input);
+}
+exports.toCommandValue = toCommandValue;
+/**
+ *
+ * @param annotationProperties
+ * @returns The command properties to send with the actual annotation command
+ * See IssueCommandProperties: https://github.com/actions/runner/blob/main/src/Runner.Worker/ActionCommandManager.cs#L646
+ */
+function toCommandProperties(annotationProperties) {
+    if (!Object.keys(annotationProperties).length) {
+        return {};
+    }
+    return {
+        title: annotationProperties.title,
+        file: annotationProperties.file,
+        line: annotationProperties.startLine,
+        endLine: annotationProperties.endLine,
+        col: annotationProperties.startColumn,
+        endColumn: annotationProperties.endColumn
+    };
+}
+exports.toCommandProperties = toCommandProperties;
+//# sourceMappingURL=utils.js.map
+
+/***/ }),
+
+/***/ 1400:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+Object.defineProperty(exports, "v1", ({
+  enumerable: true,
+  get: function () {
+    return _v.default;
+  }
+}));
+Object.defineProperty(exports, "v3", ({
+  enumerable: true,
+  get: function () {
+    return _v2.default;
+  }
+}));
+Object.defineProperty(exports, "v4", ({
+  enumerable: true,
+  get: function () {
+    return _v3.default;
+  }
+}));
+Object.defineProperty(exports, "v5", ({
+  enumerable: true,
+  get: function () {
+    return _v4.default;
+  }
+}));
+Object.defineProperty(exports, "NIL", ({
+  enumerable: true,
+  get: function () {
+    return _nil.default;
+  }
+}));
+Object.defineProperty(exports, "version", ({
+  enumerable: true,
+  get: function () {
+    return _version.default;
+  }
+}));
+Object.defineProperty(exports, "validate", ({
+  enumerable: true,
+  get: function () {
+    return _validate.default;
+  }
+}));
+Object.defineProperty(exports, "stringify", ({
+  enumerable: true,
+  get: function () {
+    return _stringify.default;
+  }
+}));
+Object.defineProperty(exports, "parse", ({
+  enumerable: true,
+  get: function () {
+    return _parse.default;
+  }
+}));
+
+var _v = _interopRequireDefault(__nccwpck_require__(8563));
+
+var _v2 = _interopRequireDefault(__nccwpck_require__(7364));
+
+var _v3 = _interopRequireDefault(__nccwpck_require__(8717));
+
+var _v4 = _interopRequireDefault(__nccwpck_require__(4910));
+
+var _nil = _interopRequireDefault(__nccwpck_require__(2738));
+
+var _version = _interopRequireDefault(__nccwpck_require__(1951));
+
+var _validate = _interopRequireDefault(__nccwpck_require__(7551));
+
+var _stringify = _interopRequireDefault(__nccwpck_require__(114));
+
+var _parse = _interopRequireDefault(__nccwpck_require__(8169));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+/***/ }),
+
+/***/ 6558:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _crypto = _interopRequireDefault(__nccwpck_require__(6113));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function md5(bytes) {
+  if (Array.isArray(bytes)) {
+    bytes = Buffer.from(bytes);
+  } else if (typeof bytes === 'string') {
+    bytes = Buffer.from(bytes, 'utf8');
+  }
+
+  return _crypto.default.createHash('md5').update(bytes).digest();
+}
+
+var _default = md5;
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 2738:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+var _default = '00000000-0000-0000-0000-000000000000';
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 8169:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _validate = _interopRequireDefault(__nccwpck_require__(7551));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function parse(uuid) {
+  if (!(0, _validate.default)(uuid)) {
+    throw TypeError('Invalid UUID');
+  }
+
+  let v;
+  const arr = new Uint8Array(16); // Parse ########-....-....-....-............
+
+  arr[0] = (v = parseInt(uuid.slice(0, 8), 16)) >>> 24;
+  arr[1] = v >>> 16 & 0xff;
+  arr[2] = v >>> 8 & 0xff;
+  arr[3] = v & 0xff; // Parse ........-####-....-....-............
+
+  arr[4] = (v = parseInt(uuid.slice(9, 13), 16)) >>> 8;
+  arr[5] = v & 0xff; // Parse ........-....-####-....-............
+
+  arr[6] = (v = parseInt(uuid.slice(14, 18), 16)) >>> 8;
+  arr[7] = v & 0xff; // Parse ........-....-....-####-............
+
+  arr[8] = (v = parseInt(uuid.slice(19, 23), 16)) >>> 8;
+  arr[9] = v & 0xff; // Parse ........-....-....-....-############
+  // (Use "/" to avoid 32-bit truncation when bit-shifting high-order bytes)
+
+  arr[10] = (v = parseInt(uuid.slice(24, 36), 16)) / 0x10000000000 & 0xff;
+  arr[11] = v / 0x100000000 & 0xff;
+  arr[12] = v >>> 24 & 0xff;
+  arr[13] = v >>> 16 & 0xff;
+  arr[14] = v >>> 8 & 0xff;
+  arr[15] = v & 0xff;
+  return arr;
+}
+
+var _default = parse;
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 907:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+var _default = /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|00000000-0000-0000-0000-000000000000)$/i;
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 6826:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = rng;
+
+var _crypto = _interopRequireDefault(__nccwpck_require__(6113));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const rnds8Pool = new Uint8Array(256); // # of random values to pre-allocate
+
+let poolPtr = rnds8Pool.length;
+
+function rng() {
+  if (poolPtr > rnds8Pool.length - 16) {
+    _crypto.default.randomFillSync(rnds8Pool);
+
+    poolPtr = 0;
+  }
+
+  return rnds8Pool.slice(poolPtr, poolPtr += 16);
+}
+
+/***/ }),
+
+/***/ 5559:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _crypto = _interopRequireDefault(__nccwpck_require__(6113));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function sha1(bytes) {
+  if (Array.isArray(bytes)) {
+    bytes = Buffer.from(bytes);
+  } else if (typeof bytes === 'string') {
+    bytes = Buffer.from(bytes, 'utf8');
+  }
+
+  return _crypto.default.createHash('sha1').update(bytes).digest();
+}
+
+var _default = sha1;
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 114:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _validate = _interopRequireDefault(__nccwpck_require__(7551));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+/**
+ * Convert array of 16 byte values to UUID string format of the form:
+ * XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+ */
+const byteToHex = [];
+
+for (let i = 0; i < 256; ++i) {
+  byteToHex.push((i + 0x100).toString(16).substr(1));
+}
+
+function stringify(arr, offset = 0) {
+  // Note: Be careful editing this code!  It's been tuned for performance
+  // and works in ways you may not expect. See https://github.com/uuidjs/uuid/pull/434
+  const uuid = (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + '-' + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + '-' + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + '-' + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + '-' + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase(); // Consistency check for valid UUID.  If this throws, it's likely due to one
+  // of the following:
+  // - One or more input array values don't map to a hex octet (leading to
+  // "undefined" in the uuid)
+  // - Invalid input values for the RFC `version` or `variant` fields
+
+  if (!(0, _validate.default)(uuid)) {
+    throw TypeError('Stringified UUID is invalid');
+  }
+
+  return uuid;
+}
+
+var _default = stringify;
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 8563:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _rng = _interopRequireDefault(__nccwpck_require__(6826));
+
+var _stringify = _interopRequireDefault(__nccwpck_require__(114));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// **`v1()` - Generate time-based UUID**
+//
+// Inspired by https://github.com/LiosK/UUID.js
+// and http://docs.python.org/library/uuid.html
+let _nodeId;
+
+let _clockseq; // Previous uuid creation time
+
+
+let _lastMSecs = 0;
+let _lastNSecs = 0; // See https://github.com/uuidjs/uuid for API details
+
+function v1(options, buf, offset) {
+  let i = buf && offset || 0;
+  const b = buf || new Array(16);
+  options = options || {};
+  let node = options.node || _nodeId;
+  let clockseq = options.clockseq !== undefined ? options.clockseq : _clockseq; // node and clockseq need to be initialized to random values if they're not
+  // specified.  We do this lazily to minimize issues related to insufficient
+  // system entropy.  See #189
+
+  if (node == null || clockseq == null) {
+    const seedBytes = options.random || (options.rng || _rng.default)();
+
+    if (node == null) {
+      // Per 4.5, create and 48-bit node id, (47 random bits + multicast bit = 1)
+      node = _nodeId = [seedBytes[0] | 0x01, seedBytes[1], seedBytes[2], seedBytes[3], seedBytes[4], seedBytes[5]];
+    }
+
+    if (clockseq == null) {
+      // Per 4.2.2, randomize (14 bit) clockseq
+      clockseq = _clockseq = (seedBytes[6] << 8 | seedBytes[7]) & 0x3fff;
+    }
+  } // UUID timestamps are 100 nano-second units since the Gregorian epoch,
+  // (1582-10-15 00:00).  JSNumbers aren't precise enough for this, so
+  // time is handled internally as 'msecs' (integer milliseconds) and 'nsecs'
+  // (100-nanoseconds offset from msecs) since unix epoch, 1970-01-01 00:00.
+
+
+  let msecs = options.msecs !== undefined ? options.msecs : Date.now(); // Per 4.2.1.2, use count of uuid's generated during the current clock
+  // cycle to simulate higher resolution clock
+
+  let nsecs = options.nsecs !== undefined ? options.nsecs : _lastNSecs + 1; // Time since last uuid creation (in msecs)
+
+  const dt = msecs - _lastMSecs + (nsecs - _lastNSecs) / 10000; // Per 4.2.1.2, Bump clockseq on clock regression
+
+  if (dt < 0 && options.clockseq === undefined) {
+    clockseq = clockseq + 1 & 0x3fff;
+  } // Reset nsecs if clock regresses (new clockseq) or we've moved onto a new
+  // time interval
+
+
+  if ((dt < 0 || msecs > _lastMSecs) && options.nsecs === undefined) {
+    nsecs = 0;
+  } // Per 4.2.1.2 Throw error if too many uuids are requested
+
+
+  if (nsecs >= 10000) {
+    throw new Error("uuid.v1(): Can't create more than 10M uuids/sec");
+  }
+
+  _lastMSecs = msecs;
+  _lastNSecs = nsecs;
+  _clockseq = clockseq; // Per 4.1.4 - Convert from unix epoch to Gregorian epoch
+
+  msecs += 12219292800000; // `time_low`
+
+  const tl = ((msecs & 0xfffffff) * 10000 + nsecs) % 0x100000000;
+  b[i++] = tl >>> 24 & 0xff;
+  b[i++] = tl >>> 16 & 0xff;
+  b[i++] = tl >>> 8 & 0xff;
+  b[i++] = tl & 0xff; // `time_mid`
+
+  const tmh = msecs / 0x100000000 * 10000 & 0xfffffff;
+  b[i++] = tmh >>> 8 & 0xff;
+  b[i++] = tmh & 0xff; // `time_high_and_version`
+
+  b[i++] = tmh >>> 24 & 0xf | 0x10; // include version
+
+  b[i++] = tmh >>> 16 & 0xff; // `clock_seq_hi_and_reserved` (Per 4.2.2 - include variant)
+
+  b[i++] = clockseq >>> 8 | 0x80; // `clock_seq_low`
+
+  b[i++] = clockseq & 0xff; // `node`
+
+  for (let n = 0; n < 6; ++n) {
+    b[i + n] = node[n];
+  }
+
+  return buf || (0, _stringify.default)(b);
+}
+
+var _default = v1;
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 7364:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _v = _interopRequireDefault(__nccwpck_require__(8964));
+
+var _md = _interopRequireDefault(__nccwpck_require__(6558));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const v3 = (0, _v.default)('v3', 0x30, _md.default);
+var _default = v3;
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 8964:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = _default;
+exports.URL = exports.DNS = void 0;
+
+var _stringify = _interopRequireDefault(__nccwpck_require__(114));
+
+var _parse = _interopRequireDefault(__nccwpck_require__(8169));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function stringToBytes(str) {
+  str = unescape(encodeURIComponent(str)); // UTF8 escape
+
+  const bytes = [];
+
+  for (let i = 0; i < str.length; ++i) {
+    bytes.push(str.charCodeAt(i));
+  }
+
+  return bytes;
+}
+
+const DNS = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
+exports.DNS = DNS;
+const URL = '6ba7b811-9dad-11d1-80b4-00c04fd430c8';
+exports.URL = URL;
+
+function _default(name, version, hashfunc) {
+  function generateUUID(value, namespace, buf, offset) {
+    if (typeof value === 'string') {
+      value = stringToBytes(value);
+    }
+
+    if (typeof namespace === 'string') {
+      namespace = (0, _parse.default)(namespace);
+    }
+
+    if (namespace.length !== 16) {
+      throw TypeError('Namespace must be array-like (16 iterable integer values, 0-255)');
+    } // Compute hash of namespace and value, Per 4.3
+    // Future: Use spread syntax when supported on all platforms, e.g. `bytes =
+    // hashfunc([...namespace, ... value])`
+
+
+    let bytes = new Uint8Array(16 + value.length);
+    bytes.set(namespace);
+    bytes.set(value, namespace.length);
+    bytes = hashfunc(bytes);
+    bytes[6] = bytes[6] & 0x0f | version;
+    bytes[8] = bytes[8] & 0x3f | 0x80;
+
+    if (buf) {
+      offset = offset || 0;
+
+      for (let i = 0; i < 16; ++i) {
+        buf[offset + i] = bytes[i];
+      }
+
+      return buf;
+    }
+
+    return (0, _stringify.default)(bytes);
+  } // Function#name is not settable on some platforms (#270)
+
+
+  try {
+    generateUUID.name = name; // eslint-disable-next-line no-empty
+  } catch (err) {} // For CommonJS default export support
+
+
+  generateUUID.DNS = DNS;
+  generateUUID.URL = URL;
+  return generateUUID;
+}
+
+/***/ }),
+
+/***/ 8717:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _rng = _interopRequireDefault(__nccwpck_require__(6826));
+
+var _stringify = _interopRequireDefault(__nccwpck_require__(114));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function v4(options, buf, offset) {
+  options = options || {};
+
+  const rnds = options.random || (options.rng || _rng.default)(); // Per 4.4, set bits for version and `clock_seq_hi_and_reserved`
+
+
+  rnds[6] = rnds[6] & 0x0f | 0x40;
+  rnds[8] = rnds[8] & 0x3f | 0x80; // Copy bytes to buffer, if provided
+
+  if (buf) {
+    offset = offset || 0;
+
+    for (let i = 0; i < 16; ++i) {
+      buf[offset + i] = rnds[i];
+    }
+
+    return buf;
+  }
+
+  return (0, _stringify.default)(rnds);
+}
+
+var _default = v4;
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 4910:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _v = _interopRequireDefault(__nccwpck_require__(8964));
+
+var _sha = _interopRequireDefault(__nccwpck_require__(5559));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const v5 = (0, _v.default)('v5', 0x50, _sha.default);
+var _default = v5;
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 7551:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _regex = _interopRequireDefault(__nccwpck_require__(907));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function validate(uuid) {
+  return typeof uuid === 'string' && _regex.default.test(uuid);
+}
+
+var _default = validate;
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 1951:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _validate = _interopRequireDefault(__nccwpck_require__(7551));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function version(uuid) {
+  if (!(0, _validate.default)(uuid)) {
+    throw TypeError('Invalid UUID');
+  }
+
+  return parseInt(uuid.substr(14, 1), 16);
+}
+
+var _default = version;
+exports["default"] = _default;
 
 /***/ }),
 
@@ -11493,9 +13132,10 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 var uuid = __nccwpck_require__(3415);
 var util = __nccwpck_require__(3837);
-var tslib = __nccwpck_require__(2107);
+var tslib = __nccwpck_require__(4351);
 var xml2js = __nccwpck_require__(6189);
 var abortController = __nccwpck_require__(2557);
+var coreUtil = __nccwpck_require__(1333);
 var logger$1 = __nccwpck_require__(3233);
 var coreAuth = __nccwpck_require__(9645);
 var os = __nccwpck_require__(2037);
@@ -11724,7 +13364,7 @@ const Constants = {
     /**
      * The core-http version
      */
-    coreHttpVersion: "2.2.6",
+    coreHttpVersion: "2.2.7",
     /**
      * Specifies HTTP.
      */
@@ -14611,7 +16251,7 @@ function deserializeResponseBody(jsonContentTypes, xmlContentTypes, response, op
                 parsedResponse.parsedBody = response.status >= 200 && response.status < 300;
             }
             if (responseSpec.headersMapper) {
-                parsedResponse.parsedHeaders = operationSpec.serializer.deserialize(responseSpec.headersMapper, parsedResponse.headers.rawHeaders(), "operationRes.parsedHeaders", options);
+                parsedResponse.parsedHeaders = operationSpec.serializer.deserialize(responseSpec.headersMapper, parsedResponse.headers.toJson(), "operationRes.parsedHeaders", options);
             }
         }
         return parsedResponse;
@@ -14677,7 +16317,7 @@ function handleErrorResponse(parsedResponse, operationSpec, responseSpec) {
         }
         // If error response has headers, try to deserialize it using default header mapper
         if (parsedResponse.headers && defaultHeadersMapper) {
-            error.response.parsedHeaders = operationSpec.serializer.deserialize(defaultHeadersMapper, parsedResponse.headers.rawHeaders(), "operationRes.parsedHeaders");
+            error.response.parsedHeaders = operationSpec.serializer.deserialize(defaultHeadersMapper, parsedResponse.headers.toJson(), "operationRes.parsedHeaders");
         }
     }
     catch (defaultError) {
@@ -14879,17 +16519,6 @@ function updateRetryData(retryOptions, retryData = { retryCount: 0, retryInterva
 }
 
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-/**
- * Helper TypeGuard that checks if the value is not null or undefined.
- * @param thing - Anything
- * @internal
- */
-function isDefined(thing) {
-    return typeof thing !== "undefined" && thing !== null;
-}
-
-// Copyright (c) Microsoft Corporation.
 const StandardAbortMessage$1 = "The operation was aborted.";
 /**
  * A wrapper for setTimeout that resolves a promise after delayInMs milliseconds.
@@ -14913,7 +16542,7 @@ function delay(delayInMs, value, options) {
             }
         };
         onAborted = () => {
-            if (isDefined(timer)) {
+            if (coreUtil.isDefined(timer)) {
                 clearTimeout(timer);
             }
             removeListeners();
@@ -17556,7 +19185,7 @@ module.exports = function(dst, src) {
 
 "use strict";
 /*!
- * Copyright (c) 2015, Salesforce.com, Inc.
+ * Copyright (c) 2015-2020, Salesforce.com, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17586,15 +19215,16 @@ module.exports = function(dst, src) {
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-const punycode = __nccwpck_require__(5477);
-const urlParse = (__nccwpck_require__(7310).parse);
-const util = __nccwpck_require__(3837);
+const punycode = __nccwpck_require__(9540);
+const urlParse = __nccwpck_require__(5682);
 const pubsuffix = __nccwpck_require__(8292);
 const Store = (__nccwpck_require__(7707)/* .Store */ .y);
 const MemoryCookieStore = (__nccwpck_require__(6738)/* .MemoryCookieStore */ .m);
 const pathMatch = (__nccwpck_require__(807)/* .pathMatch */ .U);
+const validators = __nccwpck_require__(1598);
 const VERSION = __nccwpck_require__(8742);
 const { fromCallback } = __nccwpck_require__(9046);
+const { getCustomInspectSymbol } = __nccwpck_require__(9375);
 
 // From RFC6265 S4.1.1
 // note that it excludes \x3B ";"
@@ -17636,6 +19266,7 @@ const SAME_SITE_CONTEXT_VAL_ERR =
   'Invalid sameSiteContext option for getCookies(); expected one of "strict", "lax", or "none"';
 
 function checkSameSiteContext(value) {
+  validators.validate(validators.isNonEmptyString(value), value);
   const context = String(value).toLowerCase();
   if (context === "none" || context === "lax" || context === "strict") {
     return context;
@@ -17654,7 +19285,23 @@ const PrefixSecurityEnum = Object.freeze({
 // * all capturing groups converted to non-capturing -- "(?:)"
 // * support for IPv6 Scoped Literal ("%eth1") removed
 // * lowercase hexadecimal only
-var IP_REGEX_LOWERCASE =/(?:^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}$)|(?:^(?:(?:[a-f\d]{1,4}:){7}(?:[a-f\d]{1,4}|:)|(?:[a-f\d]{1,4}:){6}(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}|:[a-f\d]{1,4}|:)|(?:[a-f\d]{1,4}:){5}(?::(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}|(?::[a-f\d]{1,4}){1,2}|:)|(?:[a-f\d]{1,4}:){4}(?:(?::[a-f\d]{1,4}){0,1}:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}|(?::[a-f\d]{1,4}){1,3}|:)|(?:[a-f\d]{1,4}:){3}(?:(?::[a-f\d]{1,4}){0,2}:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}|(?::[a-f\d]{1,4}){1,4}|:)|(?:[a-f\d]{1,4}:){2}(?:(?::[a-f\d]{1,4}){0,3}:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}|(?::[a-f\d]{1,4}){1,5}|:)|(?:[a-f\d]{1,4}:){1}(?:(?::[a-f\d]{1,4}){0,4}:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}|(?::[a-f\d]{1,4}){1,6}|:)|(?::(?:(?::[a-f\d]{1,4}){0,5}:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}|(?::[a-f\d]{1,4}){1,7}|:)))$)/;
+const IP_REGEX_LOWERCASE = /(?:^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}$)|(?:^(?:(?:[a-f\d]{1,4}:){7}(?:[a-f\d]{1,4}|:)|(?:[a-f\d]{1,4}:){6}(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}|:[a-f\d]{1,4}|:)|(?:[a-f\d]{1,4}:){5}(?::(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}|(?::[a-f\d]{1,4}){1,2}|:)|(?:[a-f\d]{1,4}:){4}(?:(?::[a-f\d]{1,4}){0,1}:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}|(?::[a-f\d]{1,4}){1,3}|:)|(?:[a-f\d]{1,4}:){3}(?:(?::[a-f\d]{1,4}){0,2}:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}|(?::[a-f\d]{1,4}){1,4}|:)|(?:[a-f\d]{1,4}:){2}(?:(?::[a-f\d]{1,4}){0,3}:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}|(?::[a-f\d]{1,4}){1,5}|:)|(?:[a-f\d]{1,4}:){1}(?:(?::[a-f\d]{1,4}){0,4}:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}|(?::[a-f\d]{1,4}){1,6}|:)|(?::(?:(?::[a-f\d]{1,4}){0,5}:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}|(?::[a-f\d]{1,4}){1,7}|:)))$)/;
+const IP_V6_REGEX = `
+\\[?(?:
+(?:[a-fA-F\\d]{1,4}:){7}(?:[a-fA-F\\d]{1,4}|:)|
+(?:[a-fA-F\\d]{1,4}:){6}(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)){3}|:[a-fA-F\\d]{1,4}|:)|
+(?:[a-fA-F\\d]{1,4}:){5}(?::(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)){3}|(?::[a-fA-F\\d]{1,4}){1,2}|:)|
+(?:[a-fA-F\\d]{1,4}:){4}(?:(?::[a-fA-F\\d]{1,4}){0,1}:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)){3}|(?::[a-fA-F\\d]{1,4}){1,3}|:)|
+(?:[a-fA-F\\d]{1,4}:){3}(?:(?::[a-fA-F\\d]{1,4}){0,2}:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)){3}|(?::[a-fA-F\\d]{1,4}){1,4}|:)|
+(?:[a-fA-F\\d]{1,4}:){2}(?:(?::[a-fA-F\\d]{1,4}){0,3}:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)){3}|(?::[a-fA-F\\d]{1,4}){1,5}|:)|
+(?:[a-fA-F\\d]{1,4}:){1}(?:(?::[a-fA-F\\d]{1,4}){0,4}:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)){3}|(?::[a-fA-F\\d]{1,4}){1,6}|:)|
+(?::(?:(?::[a-fA-F\\d]{1,4}){0,5}:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)){3}|(?::[a-fA-F\\d]{1,4}){1,7}|:))
+)(?:%[0-9a-zA-Z]{1,})?\\]?
+`
+  .replace(/\s*\/\/.*$/gm, "")
+  .replace(/\n/g, "")
+  .trim();
+const IP_V6_REGEX_OBJECT = new RegExp(`^${IP_V6_REGEX}$`);
 
 /*
  * Parses a Natural number (i.e., non-negative integer) with either the
@@ -17858,6 +19505,7 @@ function parseDate(str) {
 }
 
 function formatDate(date) {
+  validators.validate(validators.isDate(date), date);
   return date.toUTCString();
 }
 
@@ -17867,6 +19515,10 @@ function canonicalDomain(str) {
     return null;
   }
   str = str.trim().replace(/^\./, ""); // S4.1.2.3 & S5.2.3: ignore leading .
+
+  if (IP_V6_REGEX_OBJECT.test(str)) {
+    str = str.replace("[", "").replace("]", "");
+  }
 
   // convert to IDN if any non-ASCII characters
   if (punycode && /[^\u0001-\u007f]/.test(str)) {
@@ -17902,7 +19554,7 @@ function domainMatch(str, domStr, canonicalize) {
   /* " o All of the following [three] conditions hold:" */
 
   /* "* The domain string is a suffix of the string" */
-  const idx = str.indexOf(domStr);
+  const idx = str.lastIndexOf(domStr);
   if (idx <= 0) {
     return false; // it's a non-match (-1) or prefix (0)
   }
@@ -17916,7 +19568,7 @@ function domainMatch(str, domStr, canonicalize) {
 
   /* "  * The last character of the string that is not included in the
    * domain string is a %x2E (".") character." */
-  if (str.substr(idx-1,1) !== '.') {
+  if (str.substr(idx - 1, 1) !== ".") {
     return false; // doesn't align on "."
   }
 
@@ -17960,6 +19612,7 @@ function defaultPath(path) {
 }
 
 function trimTerminator(str) {
+  if (validators.isEmptyString(str)) return str;
   for (let t = 0; t < TERMINATORS.length; t++) {
     const terminatorIdx = str.indexOf(TERMINATORS[t]);
     if (terminatorIdx !== -1) {
@@ -17972,6 +19625,7 @@ function trimTerminator(str) {
 
 function parseCookiePair(cookiePair, looseMode) {
   cookiePair = trimTerminator(cookiePair);
+  validators.validate(validators.isString(cookiePair), cookiePair);
 
   let firstEq = cookiePair.indexOf("=");
   if (looseMode) {
@@ -18011,6 +19665,11 @@ function parse(str, options) {
   if (!options || typeof options !== "object") {
     options = {};
   }
+
+  if (validators.isEmptyString(str) || !validators.isString(str)) {
+    return null;
+  }
+
   str = str.trim();
 
   // We use a regex to parse the "name-value-pair" part of S5.2
@@ -18146,11 +19805,11 @@ function parse(str, options) {
           case "lax":
             c.sameSite = "lax";
             break;
+          case "none":
+            c.sameSite = "none";
+            break;
           default:
-            // RFC6265bis-02 S5.3.7 step 1:
-            // "If cookie-av's attribute-value is not a case-insensitive match
-            //  for "Strict" or "Lax", ignore the "cookie-av"."
-            // This effectively sets it to 'none' from the prototype.
+            c.sameSite = undefined;
             break;
         }
         break;
@@ -18173,6 +19832,7 @@ function parse(str, options) {
  * @returns boolean
  */
 function isSecurePrefixConditionMet(cookie) {
+  validators.validate(validators.isObject(cookie), cookie);
   return !cookie.key.startsWith("__Secure-") || cookie.secure;
 }
 
@@ -18188,6 +19848,7 @@ function isSecurePrefixConditionMet(cookie) {
  * @returns boolean
  */
 function isHostPrefixConditionMet(cookie) {
+  validators.validate(validators.isObject(cookie));
   return (
     !cookie.key.startsWith("__Host-") ||
     (cookie.secure &&
@@ -18209,7 +19870,7 @@ function jsonParse(str) {
 }
 
 function fromJSON(str) {
-  if (!str) {
+  if (!str || validators.isEmptyString(str)) {
     return null;
   }
 
@@ -18255,6 +19916,8 @@ function fromJSON(str) {
  */
 
 function cookieCompare(a, b) {
+  validators.validate(validators.isObject(a), a);
+  validators.validate(validators.isObject(b), b);
   let cmp = 0;
 
   // descending for length: b CMP a
@@ -18282,6 +19945,7 @@ function cookieCompare(a, b) {
 // Gives the permutation of all possible pathMatch()es of a given path. The
 // array is in longest-to-shortest order.  Handy for indexing.
 function permutePath(path) {
+  validators.validate(validators.isString(path));
   if (path === "/") {
     return ["/"];
   }
@@ -18329,13 +19993,14 @@ const cookieDefaults = {
   pathIsDefault: null,
   creation: null,
   lastAccessed: null,
-  sameSite: "none"
+  sameSite: undefined
 };
 
 class Cookie {
   constructor(options = {}) {
-    if (util.inspect.custom) {
-      this[util.inspect.custom] = this.inspect;
+    const customInspectSymbol = getCustomInspectSymbol();
+    if (customInspectSymbol) {
+      this[customInspectSymbol] = this.inspect;
     }
 
     Object.assign(this, cookieDefaults, options);
@@ -18617,9 +20282,13 @@ class CookieJar {
     if (typeof options === "boolean") {
       options = { rejectPublicSuffixes: options };
     }
+    validators.validate(validators.isObject(options), options);
     this.rejectPublicSuffixes = options.rejectPublicSuffixes;
     this.enableLooseMode = !!options.looseMode;
-    this.allowSpecialUseDomain = !!options.allowSpecialUseDomain;
+    this.allowSpecialUseDomain =
+      typeof options.allowSpecialUseDomain === "boolean"
+        ? options.allowSpecialUseDomain
+        : true;
     this.store = store || new MemoryCookieStore();
     this.prefixSecurity = getNormalizedPrefixSecurity(options.prefixSecurity);
     this._cloneSync = syncWrap("clone");
@@ -18633,11 +20302,29 @@ class CookieJar {
   }
 
   setCookie(cookie, url, options, cb) {
+    validators.validate(validators.isNonEmptyString(url), cb, options);
     let err;
+
+    if (validators.isFunction(url)) {
+      cb = url;
+      return cb(new Error("No URL was specified"));
+    }
+
     const context = getCookieContext(url);
-    if (typeof options === "function") {
+    if (validators.isFunction(options)) {
       cb = options;
       options = {};
+    }
+
+    validators.validate(validators.isFunction(cb), cb);
+
+    if (
+      !validators.isNonEmptyString(cookie) &&
+      !validators.isObject(cookie) &&
+      cookie instanceof String &&
+      cookie.length == 0
+    ) {
+      return cb(null);
     }
 
     const host = canonicalDomain(context.hostname);
@@ -18676,8 +20363,11 @@ class CookieJar {
 
     // S5.3 step 5: public suffixes
     if (this.rejectPublicSuffixes && cookie.domain) {
-      const suffix = pubsuffix.getPublicSuffix(cookie.cdomain());
-      if (suffix == null) {
+      const suffix = pubsuffix.getPublicSuffix(cookie.cdomain(), {
+        allowSpecialUseDomain: this.allowSpecialUseDomain,
+        ignoreError: options.ignoreError
+      });
+      if (suffix == null && !IP_V6_REGEX_OBJECT.test(cookie.domain)) {
         // e.g. "com"
         err = new Error("Cookie has domain set to a public suffix");
         return cb(options.ignoreError ? null : err);
@@ -18720,7 +20410,11 @@ class CookieJar {
     }
 
     // 6252bis-02 S5.4 Step 13 & 14:
-    if (cookie.sameSite !== "none" && sameSiteContext) {
+    if (
+      cookie.sameSite !== "none" &&
+      cookie.sameSite !== undefined &&
+      sameSiteContext
+    ) {
       // "If the cookie's "same-site-flag" is not "None", and the cookie
       //  is being set from a context whose "site for cookies" is not an
       //  exact match for request-uri's host's registered domain, then
@@ -18806,11 +20500,14 @@ class CookieJar {
 
   // RFC6365 S5.4
   getCookies(url, options, cb) {
+    validators.validate(validators.isNonEmptyString(url), cb, url);
     const context = getCookieContext(url);
-    if (typeof options === "function") {
+    if (validators.isFunction(options)) {
       cb = options;
       options = {};
     }
+    validators.validate(validators.isObject(options), cb, options);
+    validators.validate(validators.isFunction(cb), cb);
 
     const host = canonicalDomain(context.hostname);
     const path = context.pathname || "/";
@@ -18926,6 +20623,7 @@ class CookieJar {
 
   getCookieString(...args) {
     const cb = args.pop();
+    validators.validate(validators.isFunction(cb), cb);
     const next = function(err, cookies) {
       if (err) {
         cb(err);
@@ -18945,6 +20643,7 @@ class CookieJar {
 
   getSetCookieStrings(...args) {
     const cb = args.pop();
+    validators.validate(validators.isFunction(cb), cb);
     const next = function(err, cookies) {
       if (err) {
         cb(err);
@@ -18962,8 +20661,9 @@ class CookieJar {
   }
 
   serialize(cb) {
+    validators.validate(validators.isFunction(cb), cb);
     let type = this.store.constructor.name;
-    if (type === "Object") {
+    if (validators.isObject(type)) {
       type = null;
     }
 
@@ -18979,6 +20679,9 @@ class CookieJar {
 
       // CookieJar configuration:
       rejectPublicSuffixes: !!this.rejectPublicSuffixes,
+      enableLooseMode: !!this.enableLooseMode,
+      allowSpecialUseDomain: !!this.allowSpecialUseDomain,
+      prefixSecurity: getNormalizedPrefixSecurity(this.prefixSecurity),
 
       // this gets filled from getAllCookies:
       cookies: []
@@ -19081,6 +20784,7 @@ class CookieJar {
   }
 
   removeAllCookies(cb) {
+    validators.validate(validators.isFunction(cb), cb);
     const store = this.store;
 
     // Check that the store implements its own removeAllCookies(). The default
@@ -19134,6 +20838,7 @@ class CookieJar {
       cb = store;
       store = null;
     }
+    validators.validate(validators.isFunction(cb), cb);
 
     let serialized;
     if (typeof strOrObj === "string") {
@@ -19145,7 +20850,12 @@ class CookieJar {
       serialized = strOrObj;
     }
 
-    const jar = new CookieJar(store, serialized.rejectPublicSuffixes);
+    const jar = new CookieJar(store, {
+      rejectPublicSuffixes: serialized.rejectPublicSuffixes,
+      looseMode: serialized.enableLooseMode,
+      allowSpecialUseDomain: serialized.allowSpecialUseDomain,
+      prefixSecurity: serialized.prefixSecurity
+    });
     jar._importCookies(serialized, err => {
       if (err) {
         return cb(err);
@@ -19157,7 +20867,10 @@ class CookieJar {
   static deserializeSync(strOrObj, store) {
     const serialized =
       typeof strOrObj === "string" ? JSON.parse(strOrObj) : strOrObj;
-    const jar = new CookieJar(store, serialized.rejectPublicSuffixes);
+    const jar = new CookieJar(store, {
+      rejectPublicSuffixes: serialized.rejectPublicSuffixes,
+      looseMode: serialized.enableLooseMode
+    });
 
     // catch this mistake early:
     if (!jar.store.synchronous) {
@@ -19226,6 +20939,7 @@ exports.permuteDomain = __nccwpck_require__(5696).permuteDomain;
 exports.permutePath = permutePath;
 exports.canonicalDomain = canonicalDomain;
 exports.PrefixSecurityEnum = PrefixSecurityEnum;
+exports.ParameterError = validators.ParameterError;
 
 
 /***/ }),
@@ -19234,6 +20948,7 @@ exports.PrefixSecurityEnum = PrefixSecurityEnum;
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
+var __webpack_unused_export__;
 /*!
  * Copyright (c) 2015, Salesforce.com, Inc.
  * All rights reserved.
@@ -19269,19 +20984,21 @@ const { fromCallback } = __nccwpck_require__(9046);
 const Store = (__nccwpck_require__(7707)/* .Store */ .y);
 const permuteDomain = (__nccwpck_require__(5696).permuteDomain);
 const pathMatch = (__nccwpck_require__(807)/* .pathMatch */ .U);
-const util = __nccwpck_require__(3837);
+const { getCustomInspectSymbol, getUtilInspect } = __nccwpck_require__(9375);
 
 class MemoryCookieStore extends Store {
   constructor() {
     super();
     this.synchronous = true;
     this.idx = {};
-    if (util.inspect.custom) {
-      this[util.inspect.custom] = this.inspect;
+    const customInspectSymbol = getCustomInspectSymbol();
+    if (customInspectSymbol) {
+      this[customInspectSymbol] = this.inspect;
     }
   }
 
   inspect() {
+    const util = { inspect: getUtilInspect(inspectFallback) };
     return `{ idx: ${util.inspect(this.idx, false, 2)} }`;
   }
 
@@ -19298,7 +21015,7 @@ class MemoryCookieStore extends Store {
     const results = [];
     if (typeof allowSpecialUseDomain === "function") {
       cb = allowSpecialUseDomain;
-      allowSpecialUseDomain = false;
+      allowSpecialUseDomain = true;
     }
     if (!domain) {
       return cb(null, []);
@@ -19420,10 +21137,60 @@ class MemoryCookieStore extends Store {
   "removeAllCookies",
   "getAllCookies"
 ].forEach(name => {
-  MemoryCookieStore[name] = fromCallback(MemoryCookieStore.prototype[name]);
+  MemoryCookieStore.prototype[name] = fromCallback(
+    MemoryCookieStore.prototype[name]
+  );
 });
 
 exports.m = MemoryCookieStore;
+
+function inspectFallback(val) {
+  const domains = Object.keys(val);
+  if (domains.length === 0) {
+    return "{}";
+  }
+  let result = "{\n";
+  Object.keys(val).forEach((domain, i) => {
+    result += formatDomain(domain, val[domain]);
+    if (i < domains.length - 1) {
+      result += ",";
+    }
+    result += "\n";
+  });
+  result += "}";
+  return result;
+}
+
+function formatDomain(domainName, domainValue) {
+  const indent = "  ";
+  let result = `${indent}'${domainName}': {\n`;
+  Object.keys(domainValue).forEach((path, i, paths) => {
+    result += formatPath(path, domainValue[path]);
+    if (i < paths.length - 1) {
+      result += ",";
+    }
+    result += "\n";
+  });
+  result += `${indent}}`;
+  return result;
+}
+
+function formatPath(pathName, pathValue) {
+  const indent = "    ";
+  let result = `${indent}'${pathName}': {\n`;
+  Object.keys(pathValue).forEach((cookieName, i, cookieNames) => {
+    const cookie = pathValue[cookieName];
+    result += `      ${cookieName}: ${cookie.inspect()}`;
+    if (i < cookieNames.length - 1) {
+      result += ",";
+    }
+    result += "\n";
+  });
+  result += `${indent}}`;
+  return result;
+}
+
+__webpack_unused_export__ = inspectFallback;
 
 
 /***/ }),
@@ -19536,27 +21303,22 @@ const pubsuffix = __nccwpck_require__(8292);
 
 // Gives the permutation of all possible domainMatch()es of a given domain. The
 // array is in shortest-to-longest order.  Handy for indexing.
-const SPECIAL_USE_DOMAINS = ["local"]; // RFC 6761
+
 function permuteDomain(domain, allowSpecialUseDomain) {
-  let pubSuf = null;
-  if (allowSpecialUseDomain) {
-    const domainParts = domain.split(".");
-    if (SPECIAL_USE_DOMAINS.includes(domainParts[domainParts.length - 1])) {
-      pubSuf = `${domainParts[domainParts.length - 2]}.${
-        domainParts[domainParts.length - 1]
-      }`;
-    } else {
-      pubSuf = pubsuffix.getPublicSuffix(domain);
-    }
-  } else {
-    pubSuf = pubsuffix.getPublicSuffix(domain);
-  }
+  const pubSuf = pubsuffix.getPublicSuffix(domain, {
+    allowSpecialUseDomain: allowSpecialUseDomain
+  });
 
   if (!pubSuf) {
     return null;
   }
   if (pubSuf == domain) {
     return [domain];
+  }
+
+  // Nuke trailing dot
+  if (domain.slice(-1) == ".") {
+    domain = domain.slice(0, -1);
   }
 
   const prefix = domain.slice(0, -(pubSuf.length + 1)); // ".example.com"
@@ -19612,7 +21374,42 @@ exports.permuteDomain = permuteDomain;
 
 const psl = __nccwpck_require__(9975);
 
-function getPublicSuffix(domain) {
+// RFC 6761
+const SPECIAL_USE_DOMAINS = [
+  "local",
+  "example",
+  "invalid",
+  "localhost",
+  "test"
+];
+
+const SPECIAL_TREATMENT_DOMAINS = ["localhost", "invalid"];
+
+function getPublicSuffix(domain, options = {}) {
+  const domainParts = domain.split(".");
+  const topLevelDomain = domainParts[domainParts.length - 1];
+  const allowSpecialUseDomain = !!options.allowSpecialUseDomain;
+  const ignoreError = !!options.ignoreError;
+
+  if (allowSpecialUseDomain && SPECIAL_USE_DOMAINS.includes(topLevelDomain)) {
+    if (domainParts.length > 1) {
+      const secondLevelDomain = domainParts[domainParts.length - 2];
+      // In aforementioned example, the eTLD/pubSuf will be apple.localhost
+      return `${secondLevelDomain}.${topLevelDomain}`;
+    } else if (SPECIAL_TREATMENT_DOMAINS.includes(topLevelDomain)) {
+      // For a single word special use domain, e.g. 'localhost' or 'invalid', per RFC 6761,
+      // "Application software MAY recognize {localhost/invalid} names as special, or
+      // MAY pass them to name resolution APIs as they would for other domain names."
+      return `${topLevelDomain}`;
+    }
+  }
+
+  if (!ignoreError && SPECIAL_USE_DOMAINS.includes(topLevelDomain)) {
+    throw new Error(
+      `Cookie has domain set to the public suffix "${topLevelDomain}" which is a special use domain. To allow this, configure your CookieJar with {allowSpecialUseDomain:true, rejectPublicSuffixes: false}.`
+    );
+  }
+
   return psl.get(domain);
 }
 
@@ -19705,335 +21502,160 @@ exports.y = Store;
 
 /***/ }),
 
-/***/ 8742:
-/***/ ((module) => {
+/***/ 9375:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
-// generated by genversion
-module.exports = '4.0.0'
+function requireUtil() {
+  try {
+    // eslint-disable-next-line no-restricted-modules
+    return __nccwpck_require__(3837);
+  } catch (e) {
+    return null;
+  }
+}
+
+// for v10.12.0+
+function lookupCustomInspectSymbol() {
+  return Symbol.for("nodejs.util.inspect.custom");
+}
+
+// for older node environments
+function tryReadingCustomSymbolFromUtilInspect(options) {
+  const _requireUtil = options.requireUtil || requireUtil;
+  const util = _requireUtil();
+  return util ? util.inspect.custom : null;
+}
+
+exports.getUtilInspect = function getUtilInspect(fallback, options = {}) {
+  const _requireUtil = options.requireUtil || requireUtil;
+  const util = _requireUtil();
+  return function inspect(value, showHidden, depth) {
+    return util ? util.inspect(value, showHidden, depth) : fallback(value);
+  };
+};
+
+exports.getCustomInspectSymbol = function getCustomInspectSymbol(options = {}) {
+  const _lookupCustomInspectSymbol =
+    options.lookupCustomInspectSymbol || lookupCustomInspectSymbol;
+
+  // get custom inspect symbol for node environments
+  return (
+    _lookupCustomInspectSymbol() ||
+    tryReadingCustomSymbolFromUtilInspect(options)
+  );
+};
 
 
 /***/ }),
 
-/***/ 2107:
+/***/ 1598:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+/* ************************************************************************************
+Extracted from check-types.js
+https://gitlab.com/philbooth/check-types.js
+
+MIT License
+
+Copyright (c) 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 Phil Booth
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+************************************************************************************ */
+
+
+/* Validation functions copied from check-types package - https://www.npmjs.com/package/check-types */
+function isFunction(data) {
+  return typeof data === "function";
+}
+
+function isNonEmptyString(data) {
+  return isString(data) && data !== "";
+}
+
+function isDate(data) {
+  return isInstanceStrict(data, Date) && isInteger(data.getTime());
+}
+
+function isEmptyString(data) {
+  return data === "" || (data instanceof String && data.toString() === "");
+}
+
+function isString(data) {
+  return typeof data === "string" || data instanceof String;
+}
+
+function isObject(data) {
+  return toString.call(data) === "[object Object]";
+}
+function isInstanceStrict(data, prototype) {
+  try {
+    return data instanceof prototype;
+  } catch (error) {
+    return false;
+  }
+}
+
+function isInteger(data) {
+  return typeof data === "number" && data % 1 === 0;
+}
+/* End validation functions */
+
+function validate(bool, cb, options) {
+  if (!isFunction(cb)) {
+    options = cb;
+    cb = null;
+  }
+  if (!isObject(options)) options = { Error: "Failed Check" };
+  if (!bool) {
+    if (cb) {
+      cb(new ParameterError(options));
+    } else {
+      throw new ParameterError(options);
+    }
+  }
+}
+
+class ParameterError extends Error {
+  constructor(...params) {
+    super(...params);
+  }
+}
+
+exports.ParameterError = ParameterError;
+exports.isFunction = isFunction;
+exports.isNonEmptyString = isNonEmptyString;
+exports.isDate = isDate;
+exports.isEmptyString = isEmptyString;
+exports.isString = isString;
+exports.isObject = isObject;
+exports.validate = validate;
+
+
+/***/ }),
+
+/***/ 8742:
 /***/ ((module) => {
 
-/******************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-/* global global, define, System, Reflect, Promise */
-var __extends;
-var __assign;
-var __rest;
-var __decorate;
-var __param;
-var __metadata;
-var __awaiter;
-var __generator;
-var __exportStar;
-var __values;
-var __read;
-var __spread;
-var __spreadArrays;
-var __spreadArray;
-var __await;
-var __asyncGenerator;
-var __asyncDelegator;
-var __asyncValues;
-var __makeTemplateObject;
-var __importStar;
-var __importDefault;
-var __classPrivateFieldGet;
-var __classPrivateFieldSet;
-var __classPrivateFieldIn;
-var __createBinding;
-(function (factory) {
-    var root = typeof global === "object" ? global : typeof self === "object" ? self : typeof this === "object" ? this : {};
-    if (typeof define === "function" && define.amd) {
-        define("tslib", ["exports"], function (exports) { factory(createExporter(root, createExporter(exports))); });
-    }
-    else if ( true && typeof module.exports === "object") {
-        factory(createExporter(root, createExporter(module.exports)));
-    }
-    else {
-        factory(createExporter(root));
-    }
-    function createExporter(exports, previous) {
-        if (exports !== root) {
-            if (typeof Object.create === "function") {
-                Object.defineProperty(exports, "__esModule", { value: true });
-            }
-            else {
-                exports.__esModule = true;
-            }
-        }
-        return function (id, v) { return exports[id] = previous ? previous(id, v) : v; };
-    }
-})
-(function (exporter) {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-
-    __extends = function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-
-    __assign = Object.assign || function (t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
-        }
-        return t;
-    };
-
-    __rest = function (s, e) {
-        var t = {};
-        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-            t[p] = s[p];
-        if (s != null && typeof Object.getOwnPropertySymbols === "function")
-            for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-                if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                    t[p[i]] = s[p[i]];
-            }
-        return t;
-    };
-
-    __decorate = function (decorators, target, key, desc) {
-        var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-        if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-        else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-        return c > 3 && r && Object.defineProperty(target, key, r), r;
-    };
-
-    __param = function (paramIndex, decorator) {
-        return function (target, key) { decorator(target, key, paramIndex); }
-    };
-
-    __metadata = function (metadataKey, metadataValue) {
-        if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(metadataKey, metadataValue);
-    };
-
-    __awaiter = function (thisArg, _arguments, P, generator) {
-        function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-        return new (P || (P = Promise))(function (resolve, reject) {
-            function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-            function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-            function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-            step((generator = generator.apply(thisArg, _arguments || [])).next());
-        });
-    };
-
-    __generator = function (thisArg, body) {
-        var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-        return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-        function verb(n) { return function (v) { return step([n, v]); }; }
-        function step(op) {
-            if (f) throw new TypeError("Generator is already executing.");
-            while (_) try {
-                if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-                if (y = 0, t) op = [op[0] & 2, t.value];
-                switch (op[0]) {
-                    case 0: case 1: t = op; break;
-                    case 4: _.label++; return { value: op[1], done: false };
-                    case 5: _.label++; y = op[1]; op = [0]; continue;
-                    case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                    default:
-                        if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                        if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                        if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                        if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                        if (t[2]) _.ops.pop();
-                        _.trys.pop(); continue;
-                }
-                op = body.call(thisArg, _);
-            } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-            if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-        }
-    };
-
-    __exportStar = function(m, o) {
-        for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(o, p)) __createBinding(o, m, p);
-    };
-
-    __createBinding = Object.create ? (function(o, m, k, k2) {
-        if (k2 === undefined) k2 = k;
-        var desc = Object.getOwnPropertyDescriptor(m, k);
-        if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-            desc = { enumerable: true, get: function() { return m[k]; } };
-        }
-        Object.defineProperty(o, k2, desc);
-    }) : (function(o, m, k, k2) {
-        if (k2 === undefined) k2 = k;
-        o[k2] = m[k];
-    });
-
-    __values = function (o) {
-        var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
-        if (m) return m.call(o);
-        if (o && typeof o.length === "number") return {
-            next: function () {
-                if (o && i >= o.length) o = void 0;
-                return { value: o && o[i++], done: !o };
-            }
-        };
-        throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
-    };
-
-    __read = function (o, n) {
-        var m = typeof Symbol === "function" && o[Symbol.iterator];
-        if (!m) return o;
-        var i = m.call(o), r, ar = [], e;
-        try {
-            while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
-        }
-        catch (error) { e = { error: error }; }
-        finally {
-            try {
-                if (r && !r.done && (m = i["return"])) m.call(i);
-            }
-            finally { if (e) throw e.error; }
-        }
-        return ar;
-    };
-
-    /** @deprecated */
-    __spread = function () {
-        for (var ar = [], i = 0; i < arguments.length; i++)
-            ar = ar.concat(__read(arguments[i]));
-        return ar;
-    };
-
-    /** @deprecated */
-    __spreadArrays = function () {
-        for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-        for (var r = Array(s), k = 0, i = 0; i < il; i++)
-            for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-                r[k] = a[j];
-        return r;
-    };
-
-    __spreadArray = function (to, from, pack) {
-        if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-            if (ar || !(i in from)) {
-                if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-                ar[i] = from[i];
-            }
-        }
-        return to.concat(ar || Array.prototype.slice.call(from));
-    };
-
-    __await = function (v) {
-        return this instanceof __await ? (this.v = v, this) : new __await(v);
-    };
-
-    __asyncGenerator = function (thisArg, _arguments, generator) {
-        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-        var g = generator.apply(thisArg, _arguments || []), i, q = [];
-        return i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i;
-        function verb(n) { if (g[n]) i[n] = function (v) { return new Promise(function (a, b) { q.push([n, v, a, b]) > 1 || resume(n, v); }); }; }
-        function resume(n, v) { try { step(g[n](v)); } catch (e) { settle(q[0][3], e); } }
-        function step(r) { r.value instanceof __await ? Promise.resolve(r.value.v).then(fulfill, reject) : settle(q[0][2], r);  }
-        function fulfill(value) { resume("next", value); }
-        function reject(value) { resume("throw", value); }
-        function settle(f, v) { if (f(v), q.shift(), q.length) resume(q[0][0], q[0][1]); }
-    };
-
-    __asyncDelegator = function (o) {
-        var i, p;
-        return i = {}, verb("next"), verb("throw", function (e) { throw e; }), verb("return"), i[Symbol.iterator] = function () { return this; }, i;
-        function verb(n, f) { i[n] = o[n] ? function (v) { return (p = !p) ? { value: __await(o[n](v)), done: n === "return" } : f ? f(v) : v; } : f; }
-    };
-
-    __asyncValues = function (o) {
-        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-        var m = o[Symbol.asyncIterator], i;
-        return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
-        function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
-        function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
-    };
-
-    __makeTemplateObject = function (cooked, raw) {
-        if (Object.defineProperty) { Object.defineProperty(cooked, "raw", { value: raw }); } else { cooked.raw = raw; }
-        return cooked;
-    };
-
-    var __setModuleDefault = Object.create ? (function(o, v) {
-        Object.defineProperty(o, "default", { enumerable: true, value: v });
-    }) : function(o, v) {
-        o["default"] = v;
-    };
-
-    __importStar = function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-
-    __importDefault = function (mod) {
-        return (mod && mod.__esModule) ? mod : { "default": mod };
-    };
-
-    __classPrivateFieldGet = function (receiver, state, kind, f) {
-        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
-        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-        return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
-    };
-
-    __classPrivateFieldSet = function (receiver, state, value, kind, f) {
-        if (kind === "m") throw new TypeError("Private method is not writable");
-        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
-        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-        return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
-    };
-
-    __classPrivateFieldIn = function (state, receiver) {
-        if (receiver === null || (typeof receiver !== "object" && typeof receiver !== "function")) throw new TypeError("Cannot use 'in' operator on non-object");
-        return typeof state === "function" ? receiver === state : state.has(receiver);
-    };
-
-    exporter("__extends", __extends);
-    exporter("__assign", __assign);
-    exporter("__rest", __rest);
-    exporter("__decorate", __decorate);
-    exporter("__param", __param);
-    exporter("__metadata", __metadata);
-    exporter("__awaiter", __awaiter);
-    exporter("__generator", __generator);
-    exporter("__exportStar", __exportStar);
-    exporter("__createBinding", __createBinding);
-    exporter("__values", __values);
-    exporter("__read", __read);
-    exporter("__spread", __spread);
-    exporter("__spreadArrays", __spreadArrays);
-    exporter("__spreadArray", __spreadArray);
-    exporter("__await", __await);
-    exporter("__asyncGenerator", __asyncGenerator);
-    exporter("__asyncDelegator", __asyncDelegator);
-    exporter("__asyncValues", __asyncValues);
-    exporter("__makeTemplateObject", __makeTemplateObject);
-    exporter("__importStar", __importStar);
-    exporter("__importDefault", __importDefault);
-    exporter("__classPrivateFieldGet", __classPrivateFieldGet);
-    exporter("__classPrivateFieldSet", __classPrivateFieldSet);
-    exporter("__classPrivateFieldIn", __classPrivateFieldIn);
-});
+// generated by genversion
+module.exports = '4.1.2'
 
 
 /***/ }),
@@ -20693,6 +22315,721 @@ exports["default"] = _default;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 var logger$1 = __nccwpck_require__(3233);
+var abortController = __nccwpck_require__(2557);
+
+// Copyright (c) Microsoft Corporation.
+/**
+ * The `@azure/logger` configuration for this package.
+ * @internal
+ */
+const logger = logger$1.createClientLogger("core-lro");
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+/**
+ * The default time interval to wait before sending the next polling request.
+ */
+const POLL_INTERVAL_IN_MS = 2000;
+/**
+ * The closed set of terminal states.
+ */
+const terminalStates = ["succeeded", "canceled", "failed"];
+
+// Copyright (c) Microsoft Corporation.
+/**
+ * Deserializes the state
+ */
+function deserializeState(serializedState) {
+    try {
+        return JSON.parse(serializedState).state;
+    }
+    catch (e) {
+        throw new Error(`Unable to deserialize input state: ${serializedState}`);
+    }
+}
+function setStateError(inputs) {
+    const { state, stateProxy } = inputs;
+    return (error) => {
+        stateProxy.setError(state, error);
+        stateProxy.setFailed(state);
+        throw error;
+    };
+}
+function processOperationStatus(result) {
+    const { state, stateProxy, status, isDone, processResult, response, setErrorAsResult } = result;
+    switch (status) {
+        case "succeeded": {
+            stateProxy.setSucceeded(state);
+            break;
+        }
+        case "failed": {
+            stateProxy.setError(state, new Error(`The long-running operation has failed`));
+            stateProxy.setFailed(state);
+            break;
+        }
+        case "canceled": {
+            stateProxy.setCanceled(state);
+            break;
+        }
+    }
+    if ((isDone === null || isDone === void 0 ? void 0 : isDone(response, state)) ||
+        (isDone === undefined &&
+            ["succeeded", "canceled"].concat(setErrorAsResult ? [] : ["failed"]).includes(status))) {
+        stateProxy.setResult(state, buildResult({
+            response,
+            state,
+            processResult,
+        }));
+    }
+}
+function buildResult(inputs) {
+    const { processResult, response, state } = inputs;
+    return processResult ? processResult(response, state) : response;
+}
+/**
+ * Initiates the long-running operation.
+ */
+async function initOperation(inputs) {
+    const { init, stateProxy, processResult, getOperationStatus, withOperationLocation, setErrorAsResult, } = inputs;
+    const { operationLocation, resourceLocation, metadata, response } = await init();
+    if (operationLocation)
+        withOperationLocation === null || withOperationLocation === void 0 ? void 0 : withOperationLocation(operationLocation, false);
+    const config = {
+        metadata,
+        operationLocation,
+        resourceLocation,
+    };
+    logger.verbose(`LRO: Operation description:`, config);
+    const state = stateProxy.initState(config);
+    const status = getOperationStatus({ response, state, operationLocation });
+    processOperationStatus({ state, status, stateProxy, response, setErrorAsResult, processResult });
+    return state;
+}
+async function pollOperationHelper(inputs) {
+    const { poll, state, stateProxy, operationLocation, getOperationStatus, getResourceLocation, options, } = inputs;
+    const response = await poll(operationLocation, options).catch(setStateError({
+        state,
+        stateProxy,
+    }));
+    const status = getOperationStatus(response, state);
+    logger.verbose(`LRO: Status:\n\tPolling from: ${state.config.operationLocation}\n\tOperation status: ${status}\n\tPolling status: ${terminalStates.includes(status) ? "Stopped" : "Running"}`);
+    if (status === "succeeded") {
+        const resourceLocation = getResourceLocation(response, state);
+        if (resourceLocation !== undefined) {
+            return {
+                response: await poll(resourceLocation).catch(setStateError({ state, stateProxy })),
+                status,
+            };
+        }
+    }
+    return { response, status };
+}
+/** Polls the long-running operation. */
+async function pollOperation(inputs) {
+    const { poll, state, stateProxy, options, getOperationStatus, getResourceLocation, getOperationLocation, withOperationLocation, getPollingInterval, processResult, updateState, setDelay, isDone, setErrorAsResult, } = inputs;
+    const { operationLocation } = state.config;
+    if (operationLocation !== undefined) {
+        const { response, status } = await pollOperationHelper({
+            poll,
+            getOperationStatus,
+            state,
+            stateProxy,
+            operationLocation,
+            getResourceLocation,
+            options,
+        });
+        processOperationStatus({
+            status,
+            response,
+            state,
+            stateProxy,
+            isDone,
+            processResult,
+            setErrorAsResult,
+        });
+        if (!terminalStates.includes(status)) {
+            const intervalInMs = getPollingInterval === null || getPollingInterval === void 0 ? void 0 : getPollingInterval(response);
+            if (intervalInMs)
+                setDelay(intervalInMs);
+            const location = getOperationLocation === null || getOperationLocation === void 0 ? void 0 : getOperationLocation(response, state);
+            if (location !== undefined) {
+                const isUpdated = operationLocation !== location;
+                state.config.operationLocation = location;
+                withOperationLocation === null || withOperationLocation === void 0 ? void 0 : withOperationLocation(location, isUpdated);
+            }
+            else
+                withOperationLocation === null || withOperationLocation === void 0 ? void 0 : withOperationLocation(operationLocation, false);
+        }
+        updateState === null || updateState === void 0 ? void 0 : updateState(state, response);
+    }
+}
+
+// Copyright (c) Microsoft Corporation.
+function getOperationLocationPollingUrl(inputs) {
+    const { azureAsyncOperation, operationLocation } = inputs;
+    return operationLocation !== null && operationLocation !== void 0 ? operationLocation : azureAsyncOperation;
+}
+function getLocationHeader(rawResponse) {
+    return rawResponse.headers["location"];
+}
+function getOperationLocationHeader(rawResponse) {
+    return rawResponse.headers["operation-location"];
+}
+function getAzureAsyncOperationHeader(rawResponse) {
+    return rawResponse.headers["azure-asyncoperation"];
+}
+function findResourceLocation(inputs) {
+    const { location, requestMethod, requestPath, resourceLocationConfig } = inputs;
+    switch (requestMethod) {
+        case "PUT": {
+            return requestPath;
+        }
+        case "DELETE": {
+            return undefined;
+        }
+        default: {
+            switch (resourceLocationConfig) {
+                case "azure-async-operation": {
+                    return undefined;
+                }
+                case "original-uri": {
+                    return requestPath;
+                }
+                case "location":
+                default: {
+                    return location;
+                }
+            }
+        }
+    }
+}
+function inferLroMode(inputs) {
+    const { rawResponse, requestMethod, requestPath, resourceLocationConfig } = inputs;
+    const operationLocation = getOperationLocationHeader(rawResponse);
+    const azureAsyncOperation = getAzureAsyncOperationHeader(rawResponse);
+    const pollingUrl = getOperationLocationPollingUrl({ operationLocation, azureAsyncOperation });
+    const location = getLocationHeader(rawResponse);
+    const normalizedRequestMethod = requestMethod === null || requestMethod === void 0 ? void 0 : requestMethod.toLocaleUpperCase();
+    if (pollingUrl !== undefined) {
+        return {
+            mode: "OperationLocation",
+            operationLocation: pollingUrl,
+            resourceLocation: findResourceLocation({
+                requestMethod: normalizedRequestMethod,
+                location,
+                requestPath,
+                resourceLocationConfig,
+            }),
+        };
+    }
+    else if (location !== undefined) {
+        return {
+            mode: "ResourceLocation",
+            operationLocation: location,
+        };
+    }
+    else if (normalizedRequestMethod === "PUT" && requestPath) {
+        return {
+            mode: "Body",
+            operationLocation: requestPath,
+        };
+    }
+    else {
+        return undefined;
+    }
+}
+function transformStatus(inputs) {
+    const { status, statusCode } = inputs;
+    if (typeof status !== "string" && status !== undefined) {
+        throw new Error(`Polling was unsuccessful. Expected status to have a string value or no value but it has instead: ${status}. This doesn't necessarily indicate the operation has failed. Check your Azure subscription or resource status for more information.`);
+    }
+    switch (status === null || status === void 0 ? void 0 : status.toLocaleLowerCase()) {
+        case undefined:
+            return toOperationStatus(statusCode);
+        case "succeeded":
+            return "succeeded";
+        case "failed":
+            return "failed";
+        case "running":
+        case "accepted":
+        case "started":
+        case "canceling":
+        case "cancelling":
+            return "running";
+        case "canceled":
+        case "cancelled":
+            return "canceled";
+        default: {
+            logger.warning(`LRO: unrecognized operation status: ${status}`);
+            return status;
+        }
+    }
+}
+function getStatus(rawResponse) {
+    var _a;
+    const { status } = (_a = rawResponse.body) !== null && _a !== void 0 ? _a : {};
+    return transformStatus({ status, statusCode: rawResponse.statusCode });
+}
+function getProvisioningState(rawResponse) {
+    var _a, _b;
+    const { properties, provisioningState } = (_a = rawResponse.body) !== null && _a !== void 0 ? _a : {};
+    const status = (_b = properties === null || properties === void 0 ? void 0 : properties.provisioningState) !== null && _b !== void 0 ? _b : provisioningState;
+    return transformStatus({ status, statusCode: rawResponse.statusCode });
+}
+function toOperationStatus(statusCode) {
+    if (statusCode === 202) {
+        return "running";
+    }
+    else if (statusCode < 300) {
+        return "succeeded";
+    }
+    else {
+        return "failed";
+    }
+}
+function parseRetryAfter({ rawResponse }) {
+    const retryAfter = rawResponse.headers["retry-after"];
+    if (retryAfter !== undefined) {
+        // Retry-After header value is either in HTTP date format, or in seconds
+        const retryAfterInSeconds = parseInt(retryAfter);
+        return isNaN(retryAfterInSeconds)
+            ? calculatePollingIntervalFromDate(new Date(retryAfter))
+            : retryAfterInSeconds * 1000;
+    }
+    return undefined;
+}
+function calculatePollingIntervalFromDate(retryAfterDate) {
+    const timeNow = Math.floor(new Date().getTime());
+    const retryAfterTime = retryAfterDate.getTime();
+    if (timeNow < retryAfterTime) {
+        return retryAfterTime - timeNow;
+    }
+    return undefined;
+}
+function getStatusFromInitialResponse(inputs) {
+    const { response, state, operationLocation } = inputs;
+    function helper() {
+        var _a;
+        const mode = (_a = state.config.metadata) === null || _a === void 0 ? void 0 : _a["mode"];
+        switch (mode) {
+            case undefined:
+                return toOperationStatus(response.rawResponse.statusCode);
+            case "Body":
+                return getOperationStatus(response, state);
+            default:
+                return "running";
+        }
+    }
+    const status = helper();
+    return status === "running" && operationLocation === undefined ? "succeeded" : status;
+}
+/**
+ * Initiates the long-running operation.
+ */
+async function initHttpOperation(inputs) {
+    const { stateProxy, resourceLocationConfig, processResult, lro, setErrorAsResult } = inputs;
+    return initOperation({
+        init: async () => {
+            const response = await lro.sendInitialRequest();
+            const config = inferLroMode({
+                rawResponse: response.rawResponse,
+                requestPath: lro.requestPath,
+                requestMethod: lro.requestMethod,
+                resourceLocationConfig,
+            });
+            return Object.assign({ response, operationLocation: config === null || config === void 0 ? void 0 : config.operationLocation, resourceLocation: config === null || config === void 0 ? void 0 : config.resourceLocation }, ((config === null || config === void 0 ? void 0 : config.mode) ? { metadata: { mode: config.mode } } : {}));
+        },
+        stateProxy,
+        processResult: processResult
+            ? ({ flatResponse }, state) => processResult(flatResponse, state)
+            : ({ flatResponse }) => flatResponse,
+        getOperationStatus: getStatusFromInitialResponse,
+        setErrorAsResult,
+    });
+}
+function getOperationLocation({ rawResponse }, state) {
+    var _a;
+    const mode = (_a = state.config.metadata) === null || _a === void 0 ? void 0 : _a["mode"];
+    switch (mode) {
+        case "OperationLocation": {
+            return getOperationLocationPollingUrl({
+                operationLocation: getOperationLocationHeader(rawResponse),
+                azureAsyncOperation: getAzureAsyncOperationHeader(rawResponse),
+            });
+        }
+        case "ResourceLocation": {
+            return getLocationHeader(rawResponse);
+        }
+        case "Body":
+        default: {
+            return undefined;
+        }
+    }
+}
+function getOperationStatus({ rawResponse }, state) {
+    var _a;
+    const mode = (_a = state.config.metadata) === null || _a === void 0 ? void 0 : _a["mode"];
+    switch (mode) {
+        case "OperationLocation": {
+            return getStatus(rawResponse);
+        }
+        case "ResourceLocation": {
+            return toOperationStatus(rawResponse.statusCode);
+        }
+        case "Body": {
+            return getProvisioningState(rawResponse);
+        }
+        default:
+            throw new Error(`Internal error: Unexpected operation mode: ${mode}`);
+    }
+}
+function getResourceLocation({ flatResponse }, state) {
+    if (typeof flatResponse === "object") {
+        const resourceLocation = flatResponse.resourceLocation;
+        if (resourceLocation !== undefined) {
+            state.config.resourceLocation = resourceLocation;
+        }
+    }
+    return state.config.resourceLocation;
+}
+/** Polls the long-running operation. */
+async function pollHttpOperation(inputs) {
+    const { lro, stateProxy, options, processResult, updateState, setDelay, state, setErrorAsResult, } = inputs;
+    return pollOperation({
+        state,
+        stateProxy,
+        setDelay,
+        processResult: processResult
+            ? ({ flatResponse }, inputState) => processResult(flatResponse, inputState)
+            : ({ flatResponse }) => flatResponse,
+        updateState,
+        getPollingInterval: parseRetryAfter,
+        getOperationLocation,
+        getOperationStatus,
+        getResourceLocation,
+        options,
+        /**
+         * The expansion here is intentional because `lro` could be an object that
+         * references an inner this, so we need to preserve a reference to it.
+         */
+        poll: async (location, inputOptions) => lro.sendPollRequest(location, inputOptions),
+        setErrorAsResult,
+    });
+}
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+/**
+ * Map an optional value through a function
+ * @internal
+ */
+const maybemap = (value, f) => value === undefined ? undefined : f(value);
+const INTERRUPTED = new Error("The poller is already stopped");
+/**
+ * A promise that delays resolution until a certain amount of time (in milliseconds) has passed, with facilities for
+ * robust cancellation.
+ *
+ * ### Example:
+ *
+ * ```javascript
+ * let toCancel;
+ *
+ * // Wait 20 seconds, and optionally allow the function to be cancelled.
+ * await delayMs(20000, (cancel) => { toCancel = cancel });
+ *
+ * // ... if `toCancel` is called before the 20 second timer expires, then the delayMs promise will reject.
+ * ```
+ *
+ * @internal
+ * @param ms - the number of milliseconds to wait before resolving
+ * @param cb - a callback that can provide the caller with a cancellation function
+ */
+function delayMs(ms) {
+    let aborted = false;
+    let toReject;
+    return Object.assign(new Promise((resolve, reject) => {
+        let token;
+        toReject = () => {
+            maybemap(token, clearTimeout);
+            reject(INTERRUPTED);
+        };
+        // In the rare case that the operation is _already_ aborted, we will reject instantly. This could happen, for
+        // example, if the user calls the cancellation function immediately without yielding execution.
+        if (aborted) {
+            toReject();
+        }
+        else {
+            token = setTimeout(resolve, ms);
+        }
+    }), {
+        cancel: () => {
+            aborted = true;
+            toReject === null || toReject === void 0 ? void 0 : toReject();
+        },
+    });
+}
+
+// Copyright (c) Microsoft Corporation.
+const createStateProxy$1 = () => ({
+    /**
+     * The state at this point is created to be of type OperationState<TResult>.
+     * It will be updated later to be of type TState when the
+     * customer-provided callback, `updateState`, is called during polling.
+     */
+    initState: (config) => ({ status: "running", config }),
+    setCanceled: (state) => (state.status = "canceled"),
+    setError: (state, error) => (state.error = error),
+    setResult: (state, result) => (state.result = result),
+    setRunning: (state) => (state.status = "running"),
+    setSucceeded: (state) => (state.status = "succeeded"),
+    setFailed: (state) => (state.status = "failed"),
+    getError: (state) => state.error,
+    getResult: (state) => state.result,
+    isCanceled: (state) => state.status === "canceled",
+    isFailed: (state) => state.status === "failed",
+    isRunning: (state) => state.status === "running",
+    isSucceeded: (state) => state.status === "succeeded",
+});
+/**
+ * Returns a poller factory.
+ */
+function buildCreatePoller(inputs) {
+    const { getOperationLocation, getStatusFromInitialResponse, getStatusFromPollResponse, getResourceLocation, getPollingInterval, resolveOnUnsuccessful, } = inputs;
+    return async ({ init, poll }, options) => {
+        const { processResult, updateState, withOperationLocation: withOperationLocationCallback, intervalInMs = POLL_INTERVAL_IN_MS, restoreFrom, } = options || {};
+        const stateProxy = createStateProxy$1();
+        const withOperationLocation = withOperationLocationCallback
+            ? (() => {
+                let called = false;
+                return (operationLocation, isUpdated) => {
+                    if (isUpdated)
+                        withOperationLocationCallback(operationLocation);
+                    else if (!called)
+                        withOperationLocationCallback(operationLocation);
+                    called = true;
+                };
+            })()
+            : undefined;
+        const state = restoreFrom
+            ? deserializeState(restoreFrom)
+            : await initOperation({
+                init,
+                stateProxy,
+                processResult,
+                getOperationStatus: getStatusFromInitialResponse,
+                withOperationLocation,
+                setErrorAsResult: !resolveOnUnsuccessful,
+            });
+        let resultPromise;
+        let cancelJob;
+        const abortController$1 = new abortController.AbortController();
+        const handlers = new Map();
+        const handleProgressEvents = async () => handlers.forEach((h) => h(state));
+        let currentPollIntervalInMs = intervalInMs;
+        const poller = {
+            getOperationState: () => state,
+            getResult: () => state.result,
+            isDone: () => ["succeeded", "failed", "canceled"].includes(state.status),
+            isStopped: () => resultPromise === undefined,
+            stopPolling: () => {
+                abortController$1.abort();
+                cancelJob === null || cancelJob === void 0 ? void 0 : cancelJob();
+            },
+            toString: () => JSON.stringify({
+                state,
+            }),
+            onProgress: (callback) => {
+                const s = Symbol();
+                handlers.set(s, callback);
+                return () => handlers.delete(s);
+            },
+            pollUntilDone: (pollOptions) => (resultPromise !== null && resultPromise !== void 0 ? resultPromise : (resultPromise = (async () => {
+                const { abortSignal: inputAbortSignal } = pollOptions || {};
+                const { signal: abortSignal } = inputAbortSignal
+                    ? new abortController.AbortController([inputAbortSignal, abortController$1.signal])
+                    : abortController$1;
+                if (!poller.isDone()) {
+                    await poller.poll({ abortSignal });
+                    while (!poller.isDone()) {
+                        const delay = delayMs(currentPollIntervalInMs);
+                        cancelJob = delay.cancel;
+                        await delay;
+                        await poller.poll({ abortSignal });
+                    }
+                }
+                switch (state.status) {
+                    case "succeeded": {
+                        return poller.getResult();
+                    }
+                    case "canceled": {
+                        if (!resolveOnUnsuccessful)
+                            throw new Error("Operation was canceled");
+                        return poller.getResult();
+                    }
+                    case "failed": {
+                        if (!resolveOnUnsuccessful)
+                            throw state.error;
+                        return poller.getResult();
+                    }
+                    case "notStarted":
+                    case "running": {
+                        // Unreachable
+                        throw new Error(`polling completed without succeeding or failing`);
+                    }
+                }
+            })().finally(() => {
+                resultPromise = undefined;
+            }))),
+            async poll(pollOptions) {
+                await pollOperation({
+                    poll,
+                    state,
+                    stateProxy,
+                    getOperationLocation,
+                    withOperationLocation,
+                    getPollingInterval,
+                    getOperationStatus: getStatusFromPollResponse,
+                    getResourceLocation,
+                    processResult,
+                    updateState,
+                    options: pollOptions,
+                    setDelay: (pollIntervalInMs) => {
+                        currentPollIntervalInMs = pollIntervalInMs;
+                    },
+                    setErrorAsResult: !resolveOnUnsuccessful,
+                });
+                await handleProgressEvents();
+                if (state.status === "canceled" && !resolveOnUnsuccessful) {
+                    throw new Error("Operation was canceled");
+                }
+                if (state.status === "failed" && !resolveOnUnsuccessful) {
+                    throw state.error;
+                }
+            },
+        };
+        return poller;
+    };
+}
+
+// Copyright (c) Microsoft Corporation.
+/**
+ * Creates a poller that can be used to poll a long-running operation.
+ * @param lro - Description of the long-running operation
+ * @param options - options to configure the poller
+ * @returns an initialized poller
+ */
+async function createHttpPoller(lro, options) {
+    const { resourceLocationConfig, intervalInMs, processResult, restoreFrom, updateState, withOperationLocation, resolveOnUnsuccessful = false, } = options || {};
+    return buildCreatePoller({
+        getStatusFromInitialResponse,
+        getStatusFromPollResponse: getOperationStatus,
+        getOperationLocation,
+        getResourceLocation,
+        getPollingInterval: parseRetryAfter,
+        resolveOnUnsuccessful,
+    })({
+        init: async () => {
+            const response = await lro.sendInitialRequest();
+            const config = inferLroMode({
+                rawResponse: response.rawResponse,
+                requestPath: lro.requestPath,
+                requestMethod: lro.requestMethod,
+                resourceLocationConfig,
+            });
+            return Object.assign({ response, operationLocation: config === null || config === void 0 ? void 0 : config.operationLocation, resourceLocation: config === null || config === void 0 ? void 0 : config.resourceLocation }, ((config === null || config === void 0 ? void 0 : config.mode) ? { metadata: { mode: config.mode } } : {}));
+        },
+        poll: lro.sendPollRequest,
+    }, {
+        intervalInMs,
+        withOperationLocation,
+        restoreFrom,
+        updateState,
+        processResult: processResult
+            ? ({ flatResponse }, state) => processResult(flatResponse, state)
+            : ({ flatResponse }) => flatResponse,
+    });
+}
+
+// Copyright (c) Microsoft Corporation.
+const createStateProxy = () => ({
+    initState: (config) => ({ config, isStarted: true }),
+    setCanceled: (state) => (state.isCancelled = true),
+    setError: (state, error) => (state.error = error),
+    setResult: (state, result) => (state.result = result),
+    setRunning: (state) => (state.isStarted = true),
+    setSucceeded: (state) => (state.isCompleted = true),
+    setFailed: () => {
+        /** empty body */
+    },
+    getError: (state) => state.error,
+    getResult: (state) => state.result,
+    isCanceled: (state) => !!state.isCancelled,
+    isFailed: (state) => !!state.error,
+    isRunning: (state) => !!state.isStarted,
+    isSucceeded: (state) => Boolean(state.isCompleted && !state.isCancelled && !state.error),
+});
+class GenericPollOperation {
+    constructor(state, lro, setErrorAsResult, lroResourceLocationConfig, processResult, updateState, isDone) {
+        this.state = state;
+        this.lro = lro;
+        this.setErrorAsResult = setErrorAsResult;
+        this.lroResourceLocationConfig = lroResourceLocationConfig;
+        this.processResult = processResult;
+        this.updateState = updateState;
+        this.isDone = isDone;
+    }
+    setPollerConfig(pollerConfig) {
+        this.pollerConfig = pollerConfig;
+    }
+    async update(options) {
+        var _a;
+        const stateProxy = createStateProxy();
+        if (!this.state.isStarted) {
+            this.state = Object.assign(Object.assign({}, this.state), (await initHttpOperation({
+                lro: this.lro,
+                stateProxy,
+                resourceLocationConfig: this.lroResourceLocationConfig,
+                processResult: this.processResult,
+                setErrorAsResult: this.setErrorAsResult,
+            })));
+        }
+        const updateState = this.updateState;
+        const isDone = this.isDone;
+        if (!this.state.isCompleted && this.state.error === undefined) {
+            await pollHttpOperation({
+                lro: this.lro,
+                state: this.state,
+                stateProxy,
+                processResult: this.processResult,
+                updateState: updateState
+                    ? (state, { rawResponse }) => updateState(state, rawResponse)
+                    : undefined,
+                isDone: isDone
+                    ? ({ flatResponse }, state) => isDone(flatResponse, state)
+                    : undefined,
+                options,
+                setDelay: (intervalInMs) => {
+                    this.pollerConfig.intervalInMs = intervalInMs;
+                },
+                setErrorAsResult: this.setErrorAsResult,
+            });
+        }
+        (_a = options === null || options === void 0 ? void 0 : options.fireProgress) === null || _a === void 0 ? void 0 : _a.call(options, this.state);
+        return this;
+    }
+    async cancel() {
+        logger.error("`cancelOperation` is deprecated because it wasn't implemented");
+        return this;
+    }
+    /**
+     * Serializes the Poller operation.
+     */
+    toString() {
+        return JSON.stringify({
+            state: this.state,
+        });
+    }
+}
 
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
@@ -20847,6 +23184,8 @@ class Poller {
      * @param operation - Must contain the basic properties of `PollOperation<State, TResult>`.
      */
     constructor(operation) {
+        /** controls whether to throw an error if the operation failed or was canceled. */
+        this.resolveOnUnsuccessful = false;
         this.stopped = true;
         this.pollProgressCallbacks = [];
         this.operation = operation;
@@ -20865,12 +23204,12 @@ class Poller {
      * Starts a loop that will break only if the poller is done
      * or if the poller is stopped.
      */
-    async startPolling() {
+    async startPolling(pollOptions = {}) {
         if (this.stopped) {
             this.stopped = false;
         }
         while (!this.isStopped() && !this.isDone()) {
-            await this.poll();
+            await this.poll(pollOptions);
             await this.delay();
         }
     }
@@ -20884,15 +23223,10 @@ class Poller {
      */
     async pollOnce(options = {}) {
         if (!this.isDone()) {
-            try {
-                this.operation = await this.operation.update({
-                    abortSignal: options.abortSignal,
-                    fireProgress: this.fireProgress.bind(this),
-                });
-            }
-            catch (e) {
-                this.operation.state.error = e;
-            }
+            this.operation = await this.operation.update({
+                abortSignal: options.abortSignal,
+                fireProgress: this.fireProgress.bind(this),
+            });
         }
         this.processUpdatedState();
     }
@@ -20936,30 +23270,34 @@ class Poller {
     processUpdatedState() {
         if (this.operation.state.error) {
             this.stopped = true;
-            this.reject(this.operation.state.error);
-            throw this.operation.state.error;
+            if (!this.resolveOnUnsuccessful) {
+                this.reject(this.operation.state.error);
+                throw this.operation.state.error;
+            }
         }
         if (this.operation.state.isCancelled) {
             this.stopped = true;
-            const error = new PollerCancelledError("Poller cancelled");
-            this.reject(error);
-            throw error;
+            if (!this.resolveOnUnsuccessful) {
+                const error = new PollerCancelledError("Operation was canceled");
+                this.reject(error);
+                throw error;
+            }
         }
-        else if (this.isDone() && this.resolve) {
+        if (this.isDone() && this.resolve) {
             // If the poller has finished polling, this means we now have a result.
             // However, it can be the case that TResult is instantiated to void, so
             // we are not expecting a result anyway. To assert that we might not
             // have a result eventually after finishing polling, we cast the result
             // to TResult.
-            this.resolve(this.operation.state.result);
+            this.resolve(this.getResult());
         }
     }
     /**
      * Returns a promise that will resolve once the underlying operation is completed.
      */
-    async pollUntilDone() {
+    async pollUntilDone(pollOptions = {}) {
         if (this.stopped) {
-            this.startPolling().catch(this.reject);
+            this.startPolling(pollOptions).catch(this.reject);
         }
         // This is needed because the state could have been updated by
         // `cancelOperation`, e.g. the operation is canceled or an error occurred.
@@ -21092,395 +23430,17 @@ class Poller {
 
 // Copyright (c) Microsoft Corporation.
 /**
- * The `@azure/logger` configuration for this package.
- * @internal
- */
-const logger = logger$1.createClientLogger("core-lro");
-
-// Copyright (c) Microsoft Corporation.
-function throwIfUndefined(input, options = {}) {
-    var _a;
-    if (input === undefined) {
-        throw new Error((_a = options.errorMessage) !== null && _a !== void 0 ? _a : "undefined variable");
-    }
-    return input;
-}
-function updatePollingUrl(inputs) {
-    var _a, _b;
-    const { info, rawResponse } = inputs;
-    switch (info.mode) {
-        case "OperationLocation": {
-            const operationLocation = getOperationLocation(rawResponse);
-            const azureAsyncOperation = getAzureAsyncOperation(rawResponse);
-            info.pollingUrl =
-                (_a = getOperationLocationPollingUrl({ operationLocation, azureAsyncOperation })) !== null && _a !== void 0 ? _a : throwIfUndefined(info.pollingUrl);
-            break;
-        }
-        case "ResourceLocation": {
-            info.pollingUrl = (_b = getLocation(rawResponse)) !== null && _b !== void 0 ? _b : throwIfUndefined(info.pollingUrl);
-            break;
-        }
-    }
-}
-function getOperationLocationPollingUrl(inputs) {
-    const { azureAsyncOperation, operationLocation } = inputs;
-    return operationLocation !== null && operationLocation !== void 0 ? operationLocation : azureAsyncOperation;
-}
-function getLocation(rawResponse) {
-    return rawResponse.headers["location"];
-}
-function getOperationLocation(rawResponse) {
-    return rawResponse.headers["operation-location"];
-}
-function getAzureAsyncOperation(rawResponse) {
-    return rawResponse.headers["azure-asyncoperation"];
-}
-function findResourceLocation(inputs) {
-    const { location, requestMethod, requestPath, lroResourceLocationConfig } = inputs;
-    switch (requestMethod) {
-        case "PUT": {
-            return requestPath;
-        }
-        case "DELETE": {
-            return undefined;
-        }
-        default: {
-            switch (lroResourceLocationConfig) {
-                case "azure-async-operation": {
-                    return undefined;
-                }
-                case "original-uri": {
-                    return requestPath;
-                }
-                case "location":
-                default: {
-                    return location;
-                }
-            }
-        }
-    }
-}
-function inferLroMode(inputs) {
-    const { rawResponse, requestMethod, requestPath, lroResourceLocationConfig } = inputs;
-    const operationLocation = getOperationLocation(rawResponse);
-    const azureAsyncOperation = getAzureAsyncOperation(rawResponse);
-    const location = getLocation(rawResponse);
-    if (operationLocation !== undefined || azureAsyncOperation !== undefined) {
-        return {
-            mode: "OperationLocation",
-            pollingUrl: operationLocation !== null && operationLocation !== void 0 ? operationLocation : azureAsyncOperation,
-            resourceLocation: findResourceLocation({
-                requestMethod,
-                location,
-                requestPath,
-                lroResourceLocationConfig,
-            }),
-        };
-    }
-    else if (location !== undefined) {
-        return {
-            mode: "ResourceLocation",
-            pollingUrl: location,
-        };
-    }
-    else if (requestMethod === "PUT") {
-        return {
-            mode: "Body",
-            pollingUrl: requestPath,
-        };
-    }
-    else {
-        return {
-            mode: "None",
-        };
-    }
-}
-class SimpleRestError extends Error {
-    constructor(message, statusCode) {
-        super(message);
-        this.name = "RestError";
-        this.statusCode = statusCode;
-        Object.setPrototypeOf(this, SimpleRestError.prototype);
-    }
-}
-function throwIfError(rawResponse) {
-    const code = rawResponse.statusCode;
-    if (code >= 400) {
-        throw new SimpleRestError(`Received unexpected HTTP status code ${code} while polling. This may indicate a server issue.`, code);
-    }
-}
-function getStatus(rawResponse) {
-    var _a;
-    const { status } = (_a = rawResponse.body) !== null && _a !== void 0 ? _a : {};
-    return typeof status === "string" ? status.toLowerCase() : "succeeded";
-}
-function getProvisioningState(rawResponse) {
-    var _a, _b;
-    const { properties, provisioningState } = (_a = rawResponse.body) !== null && _a !== void 0 ? _a : {};
-    const state = (_b = properties === null || properties === void 0 ? void 0 : properties.provisioningState) !== null && _b !== void 0 ? _b : provisioningState;
-    return typeof state === "string" ? state.toLowerCase() : "succeeded";
-}
-function isCanceled(operation) {
-    const { state, operationStatus } = operation;
-    if (["canceled", "cancelled"].includes(operationStatus)) {
-        state.isCancelled = true;
-        return true;
-    }
-    return false;
-}
-function isTerminal(operation) {
-    const { state, operationStatus } = operation;
-    if (operationStatus === "failed") {
-        throw new Error(`The long-running operation has failed.`);
-    }
-    return operationStatus === "succeeded" || isCanceled({ state, operationStatus });
-}
-function getOperationStatus(result) {
-    const { rawResponse, state, info, responseKind = "Polling" } = result;
-    throwIfError(rawResponse);
-    switch (info.mode) {
-        case "OperationLocation": {
-            const operationStatus = getStatus(rawResponse);
-            return {
-                operationStatus,
-                shouldStopPolling: responseKind === "Polling" && isTerminal({ state, operationStatus }),
-            };
-        }
-        case "Body": {
-            const operationStatus = getProvisioningState(rawResponse);
-            return {
-                operationStatus,
-                shouldStopPolling: isTerminal({ state, operationStatus }),
-            };
-        }
-        case "ResourceLocation": {
-            const operationStatus = rawResponse.statusCode;
-            return {
-                operationStatus,
-                shouldStopPolling: responseKind === "Polling" && operationStatus !== 202,
-            };
-        }
-        case "None": {
-            return {
-                shouldStopPolling: true,
-            };
-        }
-    }
-}
-function shouldStopPolling(result) {
-    const { rawResponse, state, info, responseKind = "Polling" } = result;
-    const { shouldStopPolling: isPollingStopped, operationStatus } = getOperationStatus({
-        info,
-        rawResponse,
-        state,
-        responseKind,
-    });
-    if (operationStatus) {
-        logger.verbose(`LRO: Status:\n\tPolling from: ${info.pollingUrl}\n\tOperation status: ${operationStatus}\n\tPolling status: ${isPollingStopped ? "Stopped" : "Running"}`);
-    }
-    else {
-        logger.verbose(`LRO: Status: Not an LRO`);
-    }
-    return isPollingStopped;
-}
-/**
- * Creates a polling operation.
- */
-function createPoll(lroPrimitives) {
-    return async (path, pollerConfig, getLroStatusFromResponse) => {
-        const response = await lroPrimitives.sendPollRequest(path);
-        const retryAfter = response.rawResponse.headers["retry-after"];
-        if (retryAfter !== undefined) {
-            // Retry-After header value is either in HTTP date format, or in seconds
-            const retryAfterInSeconds = parseInt(retryAfter);
-            pollerConfig.intervalInMs = isNaN(retryAfterInSeconds)
-                ? calculatePollingIntervalFromDate(new Date(retryAfter), pollerConfig.intervalInMs)
-                : retryAfterInSeconds * 1000;
-        }
-        return getLroStatusFromResponse(response);
-    };
-}
-function calculatePollingIntervalFromDate(retryAfterDate, defaultIntervalInMs) {
-    const timeNow = Math.floor(new Date().getTime());
-    const retryAfterTime = retryAfterDate.getTime();
-    if (timeNow < retryAfterTime) {
-        return retryAfterTime - timeNow;
-    }
-    return defaultIntervalInMs;
-}
-function buildResult(inputs) {
-    const { processResult, response, state } = inputs;
-    return processResult ? processResult(response, state) : response;
-}
-/**
- * Creates a callback to be used to initialize the polling operation state.
- */
-function createStateInitializer(inputs) {
-    const { requestMethod, requestPath, state, lroResourceLocationConfig, processResult } = inputs;
-    return (response) => {
-        const { rawResponse } = response;
-        state.isStarted = true;
-        state.config = inferLroMode({
-            rawResponse,
-            requestPath,
-            requestMethod,
-            lroResourceLocationConfig,
-        });
-        logger.verbose(`LRO: Operation description:`, state.config);
-        /** short circuit before polling */
-        if (shouldStopPolling({
-            rawResponse,
-            state,
-            info: state.config,
-            responseKind: "Initial",
-        })) {
-            state.result = buildResult({
-                response: response.flatResponse,
-                state: state,
-                processResult,
-            });
-            state.isCompleted = true;
-        }
-    };
-}
-function createGetLroStatusFromResponse(inputs) {
-    const { lro, state, info } = inputs;
-    const location = info.resourceLocation;
-    return (response) => {
-        const isTerminalStatus = shouldStopPolling({
-            info,
-            rawResponse: response.rawResponse,
-            state,
-        });
-        return Object.assign(Object.assign({}, response), { done: isTerminalStatus && !location, next: !(isTerminalStatus && location)
-                ? undefined
-                : () => lro.sendPollRequest(location).then((res) => (Object.assign(Object.assign({}, res), { done: true }))) });
-    };
-}
-
-// Copyright (c) Microsoft Corporation.
-class GenericPollOperation {
-    constructor(state, lro, lroResourceLocationConfig, processResult, updateState, isDone) {
-        this.state = state;
-        this.lro = lro;
-        this.lroResourceLocationConfig = lroResourceLocationConfig;
-        this.processResult = processResult;
-        this.updateState = updateState;
-        this.isDone = isDone;
-    }
-    setPollerConfig(pollerConfig) {
-        this.pollerConfig = pollerConfig;
-    }
-    /**
-     * General update function for LROPoller, the general process is as follows
-     * 1. Check initial operation result to determine the strategy to use
-     *  - Strategies: Location, Azure-AsyncOperation, Original Uri
-     * 2. Check if the operation result has a terminal state
-     *  - Terminal state will be determined by each strategy
-     *  2.1 If it is terminal state Check if a final GET request is required, if so
-     *      send final GET request and return result from operation. If no final GET
-     *      is required, just return the result from operation.
-     *      - Determining what to call for final request is responsibility of each strategy
-     *  2.2 If it is not terminal state, call the polling operation and go to step 1
-     *      - Determining what to call for polling is responsibility of each strategy
-     *      - Strategies will always use the latest URI for polling if provided otherwise
-     *        the last known one
-     */
-    async update(options) {
-        var _a, _b, _c;
-        const state = this.state;
-        let lastResponse = undefined;
-        if (!state.isStarted) {
-            const initializeState = createStateInitializer({
-                state,
-                requestPath: this.lro.requestPath,
-                requestMethod: this.lro.requestMethod,
-                lroResourceLocationConfig: this.lroResourceLocationConfig,
-                processResult: this.processResult,
-            });
-            lastResponse = await this.lro.sendInitialRequest();
-            initializeState(lastResponse);
-        }
-        if (!state.isCompleted) {
-            const config = throwIfUndefined(state.config, {
-                errorMessage: "Bad state: LRO mode is undefined. Check if the serialized state is well-formed.",
-            });
-            if (!this.poll) {
-                this.poll = createPoll(this.lro);
-            }
-            if (!this.getLroStatusFromResponse) {
-                const isDone = this.isDone;
-                this.getLroStatusFromResponse = isDone
-                    ? (response) => (Object.assign(Object.assign({}, response), { done: isDone(response.flatResponse, this.state) }))
-                    : createGetLroStatusFromResponse({
-                        lro: this.lro,
-                        info: config,
-                        state: this.state,
-                    });
-            }
-            const currentState = await this.poll(throwIfUndefined(config.pollingUrl), this.pollerConfig, this.getLroStatusFromResponse);
-            if (currentState.done) {
-                state.result = buildResult({
-                    response: currentState.flatResponse,
-                    state,
-                    processResult: this.processResult,
-                });
-                state.isCompleted = true;
-            }
-            else {
-                this.poll = (_a = currentState.next) !== null && _a !== void 0 ? _a : this.poll;
-                updatePollingUrl({
-                    rawResponse: currentState.rawResponse,
-                    info: config,
-                });
-                /** for backward compatability */
-                state.pollingURL = config.pollingUrl;
-            }
-            lastResponse = currentState;
-        }
-        if (lastResponse) {
-            (_b = this.updateState) === null || _b === void 0 ? void 0 : _b.call(this, state, lastResponse === null || lastResponse === void 0 ? void 0 : lastResponse.rawResponse);
-        }
-        else {
-            logger.error(`LRO: no response was received`);
-        }
-        (_c = options === null || options === void 0 ? void 0 : options.fireProgress) === null || _c === void 0 ? void 0 : _c.call(options, state);
-        return this;
-    }
-    async cancel() {
-        logger.error("`cancelOperation` is deprecated because it wasn't implemented");
-        return this;
-    }
-    /**
-     * Serializes the Poller operation.
-     */
-    toString() {
-        return JSON.stringify({
-            state: this.state,
-        });
-    }
-}
-
-// Copyright (c) Microsoft Corporation.
-function deserializeState(serializedState) {
-    try {
-        return JSON.parse(serializedState).state;
-    }
-    catch (e) {
-        throw new Error(`LroEngine: Unable to deserialize state: ${serializedState}`);
-    }
-}
-/**
  * The LRO Engine, a class that performs polling.
  */
 class LroEngine extends Poller {
     constructor(lro, options) {
-        const { intervalInMs = 2000, resumeFrom } = options || {};
+        const { intervalInMs = POLL_INTERVAL_IN_MS, resumeFrom, resolveOnUnsuccessful = false, isDone, lroResourceLocationConfig, processResult, updateState, } = options || {};
         const state = resumeFrom
             ? deserializeState(resumeFrom)
             : {};
-        const operation = new GenericPollOperation(state, lro, options === null || options === void 0 ? void 0 : options.lroResourceLocationConfig, options === null || options === void 0 ? void 0 : options.processResult, options === null || options === void 0 ? void 0 : options.updateState, options === null || options === void 0 ? void 0 : options.isDone);
+        const operation = new GenericPollOperation(state, lro, !resolveOnUnsuccessful, lroResourceLocationConfig, processResult, updateState, isDone);
         super(operation);
+        this.resolveOnUnsuccessful = resolveOnUnsuccessful;
         this.config = { intervalInMs: intervalInMs };
         operation.setPollerConfig(this.config);
     }
@@ -21496,6 +23456,7 @@ exports.LroEngine = LroEngine;
 exports.Poller = Poller;
 exports.PollerCancelledError = PollerCancelledError;
 exports.PollerStoppedError = PollerStoppedError;
+exports.createHttpPoller = createHttpPoller;
 //# sourceMappingURL=index.js.map
 
 
@@ -21509,7 +23470,7 @@ exports.PollerStoppedError = PollerStoppedError;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 
-var tslib = __nccwpck_require__(6429);
+var tslib = __nccwpck_require__(4351);
 
 // Copyright (c) Microsoft Corporation.
 /**
@@ -21583,330 +23544,6 @@ function getPageAsyncIterator(pagedResult, options = {}) {
 
 exports.getPagedAsyncIterator = getPagedAsyncIterator;
 //# sourceMappingURL=index.js.map
-
-
-/***/ }),
-
-/***/ 6429:
-/***/ ((module) => {
-
-/******************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-/* global global, define, System, Reflect, Promise */
-var __extends;
-var __assign;
-var __rest;
-var __decorate;
-var __param;
-var __metadata;
-var __awaiter;
-var __generator;
-var __exportStar;
-var __values;
-var __read;
-var __spread;
-var __spreadArrays;
-var __spreadArray;
-var __await;
-var __asyncGenerator;
-var __asyncDelegator;
-var __asyncValues;
-var __makeTemplateObject;
-var __importStar;
-var __importDefault;
-var __classPrivateFieldGet;
-var __classPrivateFieldSet;
-var __classPrivateFieldIn;
-var __createBinding;
-(function (factory) {
-    var root = typeof global === "object" ? global : typeof self === "object" ? self : typeof this === "object" ? this : {};
-    if (typeof define === "function" && define.amd) {
-        define("tslib", ["exports"], function (exports) { factory(createExporter(root, createExporter(exports))); });
-    }
-    else if ( true && typeof module.exports === "object") {
-        factory(createExporter(root, createExporter(module.exports)));
-    }
-    else {
-        factory(createExporter(root));
-    }
-    function createExporter(exports, previous) {
-        if (exports !== root) {
-            if (typeof Object.create === "function") {
-                Object.defineProperty(exports, "__esModule", { value: true });
-            }
-            else {
-                exports.__esModule = true;
-            }
-        }
-        return function (id, v) { return exports[id] = previous ? previous(id, v) : v; };
-    }
-})
-(function (exporter) {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-
-    __extends = function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-
-    __assign = Object.assign || function (t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
-        }
-        return t;
-    };
-
-    __rest = function (s, e) {
-        var t = {};
-        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-            t[p] = s[p];
-        if (s != null && typeof Object.getOwnPropertySymbols === "function")
-            for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-                if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                    t[p[i]] = s[p[i]];
-            }
-        return t;
-    };
-
-    __decorate = function (decorators, target, key, desc) {
-        var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-        if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-        else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-        return c > 3 && r && Object.defineProperty(target, key, r), r;
-    };
-
-    __param = function (paramIndex, decorator) {
-        return function (target, key) { decorator(target, key, paramIndex); }
-    };
-
-    __metadata = function (metadataKey, metadataValue) {
-        if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(metadataKey, metadataValue);
-    };
-
-    __awaiter = function (thisArg, _arguments, P, generator) {
-        function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-        return new (P || (P = Promise))(function (resolve, reject) {
-            function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-            function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-            function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-            step((generator = generator.apply(thisArg, _arguments || [])).next());
-        });
-    };
-
-    __generator = function (thisArg, body) {
-        var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-        return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-        function verb(n) { return function (v) { return step([n, v]); }; }
-        function step(op) {
-            if (f) throw new TypeError("Generator is already executing.");
-            while (_) try {
-                if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-                if (y = 0, t) op = [op[0] & 2, t.value];
-                switch (op[0]) {
-                    case 0: case 1: t = op; break;
-                    case 4: _.label++; return { value: op[1], done: false };
-                    case 5: _.label++; y = op[1]; op = [0]; continue;
-                    case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                    default:
-                        if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                        if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                        if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                        if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                        if (t[2]) _.ops.pop();
-                        _.trys.pop(); continue;
-                }
-                op = body.call(thisArg, _);
-            } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-            if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-        }
-    };
-
-    __exportStar = function(m, o) {
-        for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(o, p)) __createBinding(o, m, p);
-    };
-
-    __createBinding = Object.create ? (function(o, m, k, k2) {
-        if (k2 === undefined) k2 = k;
-        var desc = Object.getOwnPropertyDescriptor(m, k);
-        if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-            desc = { enumerable: true, get: function() { return m[k]; } };
-        }
-        Object.defineProperty(o, k2, desc);
-    }) : (function(o, m, k, k2) {
-        if (k2 === undefined) k2 = k;
-        o[k2] = m[k];
-    });
-
-    __values = function (o) {
-        var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
-        if (m) return m.call(o);
-        if (o && typeof o.length === "number") return {
-            next: function () {
-                if (o && i >= o.length) o = void 0;
-                return { value: o && o[i++], done: !o };
-            }
-        };
-        throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
-    };
-
-    __read = function (o, n) {
-        var m = typeof Symbol === "function" && o[Symbol.iterator];
-        if (!m) return o;
-        var i = m.call(o), r, ar = [], e;
-        try {
-            while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
-        }
-        catch (error) { e = { error: error }; }
-        finally {
-            try {
-                if (r && !r.done && (m = i["return"])) m.call(i);
-            }
-            finally { if (e) throw e.error; }
-        }
-        return ar;
-    };
-
-    /** @deprecated */
-    __spread = function () {
-        for (var ar = [], i = 0; i < arguments.length; i++)
-            ar = ar.concat(__read(arguments[i]));
-        return ar;
-    };
-
-    /** @deprecated */
-    __spreadArrays = function () {
-        for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-        for (var r = Array(s), k = 0, i = 0; i < il; i++)
-            for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-                r[k] = a[j];
-        return r;
-    };
-
-    __spreadArray = function (to, from, pack) {
-        if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-            if (ar || !(i in from)) {
-                if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-                ar[i] = from[i];
-            }
-        }
-        return to.concat(ar || Array.prototype.slice.call(from));
-    };
-
-    __await = function (v) {
-        return this instanceof __await ? (this.v = v, this) : new __await(v);
-    };
-
-    __asyncGenerator = function (thisArg, _arguments, generator) {
-        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-        var g = generator.apply(thisArg, _arguments || []), i, q = [];
-        return i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i;
-        function verb(n) { if (g[n]) i[n] = function (v) { return new Promise(function (a, b) { q.push([n, v, a, b]) > 1 || resume(n, v); }); }; }
-        function resume(n, v) { try { step(g[n](v)); } catch (e) { settle(q[0][3], e); } }
-        function step(r) { r.value instanceof __await ? Promise.resolve(r.value.v).then(fulfill, reject) : settle(q[0][2], r);  }
-        function fulfill(value) { resume("next", value); }
-        function reject(value) { resume("throw", value); }
-        function settle(f, v) { if (f(v), q.shift(), q.length) resume(q[0][0], q[0][1]); }
-    };
-
-    __asyncDelegator = function (o) {
-        var i, p;
-        return i = {}, verb("next"), verb("throw", function (e) { throw e; }), verb("return"), i[Symbol.iterator] = function () { return this; }, i;
-        function verb(n, f) { i[n] = o[n] ? function (v) { return (p = !p) ? { value: __await(o[n](v)), done: n === "return" } : f ? f(v) : v; } : f; }
-    };
-
-    __asyncValues = function (o) {
-        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-        var m = o[Symbol.asyncIterator], i;
-        return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
-        function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
-        function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
-    };
-
-    __makeTemplateObject = function (cooked, raw) {
-        if (Object.defineProperty) { Object.defineProperty(cooked, "raw", { value: raw }); } else { cooked.raw = raw; }
-        return cooked;
-    };
-
-    var __setModuleDefault = Object.create ? (function(o, v) {
-        Object.defineProperty(o, "default", { enumerable: true, value: v });
-    }) : function(o, v) {
-        o["default"] = v;
-    };
-
-    __importStar = function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-
-    __importDefault = function (mod) {
-        return (mod && mod.__esModule) ? mod : { "default": mod };
-    };
-
-    __classPrivateFieldGet = function (receiver, state, kind, f) {
-        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
-        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-        return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
-    };
-
-    __classPrivateFieldSet = function (receiver, state, value, kind, f) {
-        if (kind === "m") throw new TypeError("Private method is not writable");
-        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
-        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-        return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
-    };
-
-    __classPrivateFieldIn = function (state, receiver) {
-        if (receiver === null || (typeof receiver !== "object" && typeof receiver !== "function")) throw new TypeError("Cannot use 'in' operator on non-object");
-        return typeof state === "function" ? receiver === state : state.has(receiver);
-    };
-
-    exporter("__extends", __extends);
-    exporter("__assign", __assign);
-    exporter("__rest", __rest);
-    exporter("__decorate", __decorate);
-    exporter("__param", __param);
-    exporter("__metadata", __metadata);
-    exporter("__awaiter", __awaiter);
-    exporter("__generator", __generator);
-    exporter("__exportStar", __exportStar);
-    exporter("__createBinding", __createBinding);
-    exporter("__values", __values);
-    exporter("__read", __read);
-    exporter("__spread", __spread);
-    exporter("__spreadArrays", __spreadArrays);
-    exporter("__spreadArray", __spreadArray);
-    exporter("__await", __await);
-    exporter("__asyncGenerator", __asyncGenerator);
-    exporter("__asyncDelegator", __asyncDelegator);
-    exporter("__asyncValues", __asyncValues);
-    exporter("__makeTemplateObject", __makeTemplateObject);
-    exporter("__importStar", __importStar);
-    exporter("__importDefault", __importDefault);
-    exporter("__classPrivateFieldGet", __classPrivateFieldGet);
-    exporter("__classPrivateFieldSet", __classPrivateFieldSet);
-    exporter("__classPrivateFieldIn", __classPrivateFieldIn);
-});
 
 
 /***/ }),
@@ -22133,6 +23770,211 @@ exports.getTracer = getTracer;
 exports.isSpanContextValid = isSpanContextValid;
 exports.setSpan = setSpan;
 exports.setSpanContext = setSpanContext;
+//# sourceMappingURL=index.js.map
+
+
+/***/ }),
+
+/***/ 1333:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+
+var abortController = __nccwpck_require__(2557);
+var crypto = __nccwpck_require__(6113);
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+var _a;
+/**
+ * A constant that indicates whether the environment the code is running is Node.JS.
+ */
+const isNode = typeof process !== "undefined" && Boolean(process.version) && Boolean((_a = process.versions) === null || _a === void 0 ? void 0 : _a.node);
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+/**
+ * Helper TypeGuard that checks if something is defined or not.
+ * @param thing - Anything
+ */
+function isDefined(thing) {
+    return typeof thing !== "undefined" && thing !== null;
+}
+/**
+ * Helper TypeGuard that checks if the input is an object with the specified properties.
+ * @param thing - Anything.
+ * @param properties - The name of the properties that should appear in the object.
+ */
+function isObjectWithProperties(thing, properties) {
+    if (!isDefined(thing) || typeof thing !== "object") {
+        return false;
+    }
+    for (const property of properties) {
+        if (!objectHasProperty(thing, property)) {
+            return false;
+        }
+    }
+    return true;
+}
+/**
+ * Helper TypeGuard that checks if the input is an object with the specified property.
+ * @param thing - Any object.
+ * @param property - The name of the property that should appear in the object.
+ */
+function objectHasProperty(thing, property) {
+    return (isDefined(thing) && typeof thing === "object" && property in thing);
+}
+
+// Copyright (c) Microsoft Corporation.
+const StandardAbortMessage = "The operation was aborted.";
+/**
+ * A wrapper for setTimeout that resolves a promise after timeInMs milliseconds.
+ * @param timeInMs - The number of milliseconds to be delayed.
+ * @param options - The options for delay - currently abort options
+ * @returns Promise that is resolved after timeInMs
+ */
+function delay(timeInMs, options) {
+    return new Promise((resolve, reject) => {
+        let timer = undefined;
+        let onAborted = undefined;
+        const rejectOnAbort = () => {
+            var _a;
+            return reject(new abortController.AbortError((_a = options === null || options === void 0 ? void 0 : options.abortErrorMsg) !== null && _a !== void 0 ? _a : StandardAbortMessage));
+        };
+        const removeListeners = () => {
+            if ((options === null || options === void 0 ? void 0 : options.abortSignal) && onAborted) {
+                options.abortSignal.removeEventListener("abort", onAborted);
+            }
+        };
+        onAborted = () => {
+            if (isDefined(timer)) {
+                clearTimeout(timer);
+            }
+            removeListeners();
+            return rejectOnAbort();
+        };
+        if ((options === null || options === void 0 ? void 0 : options.abortSignal) && options.abortSignal.aborted) {
+            return rejectOnAbort();
+        }
+        timer = setTimeout(() => {
+            removeListeners();
+            resolve();
+        }, timeInMs);
+        if (options === null || options === void 0 ? void 0 : options.abortSignal) {
+            options.abortSignal.addEventListener("abort", onAborted);
+        }
+    });
+}
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+/**
+ * Returns a random integer value between a lower and upper bound,
+ * inclusive of both bounds.
+ * Note that this uses Math.random and isn't secure. If you need to use
+ * this for any kind of security purpose, find a better source of random.
+ * @param min - The smallest integer value allowed.
+ * @param max - The largest integer value allowed.
+ */
+function getRandomIntegerInclusive(min, max) {
+    // Make sure inputs are integers.
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    // Pick a random offset from zero to the size of the range.
+    // Since Math.random() can never return 1, we have to make the range one larger
+    // in order to be inclusive of the maximum value after we take the floor.
+    const offset = Math.floor(Math.random() * (max - min + 1));
+    return offset + min;
+}
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+/**
+ * Helper to determine when an input is a generic JS object.
+ * @returns true when input is an object type that is not null, Array, RegExp, or Date.
+ */
+function isObject(input) {
+    return (typeof input === "object" &&
+        input !== null &&
+        !Array.isArray(input) &&
+        !(input instanceof RegExp) &&
+        !(input instanceof Date));
+}
+
+// Copyright (c) Microsoft Corporation.
+/**
+ * Typeguard for an error object shape (has name and message)
+ * @param e - Something caught by a catch clause.
+ */
+function isError(e) {
+    if (isObject(e)) {
+        const hasName = typeof e.name === "string";
+        const hasMessage = typeof e.message === "string";
+        return hasName && hasMessage;
+    }
+    return false;
+}
+/**
+ * Given what is thought to be an error object, return the message if possible.
+ * If the message is missing, returns a stringified version of the input.
+ * @param e - Something thrown from a try block
+ * @returns The error message or a string of the input
+ */
+function getErrorMessage(e) {
+    if (isError(e)) {
+        return e.message;
+    }
+    else {
+        let stringified;
+        try {
+            if (typeof e === "object" && e) {
+                stringified = JSON.stringify(e);
+            }
+            else {
+                stringified = String(e);
+            }
+        }
+        catch (err) {
+            stringified = "[unable to stringify input]";
+        }
+        return `Unknown error ${stringified}`;
+    }
+}
+
+// Copyright (c) Microsoft Corporation.
+/**
+ * Generates a SHA-256 HMAC signature.
+ * @param key - The HMAC key represented as a base64 string, used to generate the cryptographic HMAC hash.
+ * @param stringToSign - The data to be signed.
+ * @param encoding - The textual encoding to use for the returned HMAC digest.
+ */
+async function computeSha256Hmac(key, stringToSign, encoding) {
+    const decodedKey = Buffer.from(key, "base64");
+    return crypto.createHmac("sha256", decodedKey).update(stringToSign).digest(encoding);
+}
+/**
+ * Generates a SHA-256 hash.
+ * @param content - The data to be included in the hash.
+ * @param encoding - The textual encoding to use for the returned hash.
+ */
+async function computeSha256Hash(content, encoding) {
+    return crypto.createHash("sha256").update(content).digest(encoding);
+}
+
+exports.computeSha256Hash = computeSha256Hash;
+exports.computeSha256Hmac = computeSha256Hmac;
+exports.delay = delay;
+exports.getErrorMessage = getErrorMessage;
+exports.getRandomIntegerInclusive = getRandomIntegerInclusive;
+exports.isDefined = isDefined;
+exports.isError = isError;
+exports.isNode = isNode;
+exports.isObject = isObject;
+exports.isObjectWithProperties = isObjectWithProperties;
+exports.objectHasProperty = objectHasProperty;
 //# sourceMappingURL=index.js.map
 
 
@@ -22365,7 +24207,7 @@ exports.setLogLevel = setLogLevel;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 var coreHttp = __nccwpck_require__(4607);
-var tslib = __nccwpck_require__(679);
+var tslib = __nccwpck_require__(4351);
 var coreTracing = __nccwpck_require__(4175);
 var logger$1 = __nccwpck_require__(3233);
 var abortController = __nccwpck_require__(2557);
@@ -30859,7 +32701,7 @@ const timeoutInSeconds = {
 const version = {
     parameterPath: "version",
     mapper: {
-        defaultValue: "2021-08-06",
+        defaultValue: "2021-10-04",
         isConstant: true,
         serializedName: "x-ms-version",
         type: {
@@ -35687,14 +37529,15 @@ const logger = logger$1.createClientLogger("storage-blob");
 
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-const SDK_VERSION = "12.11.0";
-const SERVICE_VERSION = "2021-08-06";
+const SDK_VERSION = "12.12.0";
+const SERVICE_VERSION = "2021-10-04";
 const BLOCK_BLOB_MAX_UPLOAD_BLOB_BYTES = 256 * 1024 * 1024; // 256MB
 const BLOCK_BLOB_MAX_STAGE_BLOCK_BYTES = 4000 * 1024 * 1024; // 4000MB
 const BLOCK_BLOB_MAX_BLOCKS = 50000;
 const DEFAULT_BLOCK_BUFFER_SIZE_BYTES = 8 * 1024 * 1024; // 8MB
 const DEFAULT_BLOB_DOWNLOAD_BLOCK_BYTES = 4 * 1024 * 1024; // 4MB
 const DEFAULT_MAX_DOWNLOAD_RETRY_REQUESTS = 5;
+const REQUEST_TIMEOUT = 100 * 1000; // In ms
 /**
  * The OAuth scope to use with Azure Storage.
  */
@@ -35882,6 +37725,30 @@ const StorageBlobLoggingAllowedQueryParameters = [
 ];
 const BlobUsesCustomerSpecifiedEncryptionMsg = "BlobUsesCustomerSpecifiedEncryption";
 const BlobDoesNotUseCustomerSpecifiedEncryption = "BlobDoesNotUseCustomerSpecifiedEncryption";
+/// List of ports used for path style addressing.
+/// Path style addressing means that storage account is put in URI's Path segment in instead of in host.
+const PathStylePorts = [
+    "10000",
+    "10001",
+    "10002",
+    "10003",
+    "10004",
+    "10100",
+    "10101",
+    "10102",
+    "10103",
+    "10104",
+    "11000",
+    "11001",
+    "11002",
+    "11003",
+    "11004",
+    "11100",
+    "11101",
+    "11102",
+    "11103",
+    "11104",
+];
 
 // Copyright (c) Microsoft Corporation.
 /**
@@ -36323,7 +38190,8 @@ function isIpEndpointStyle(parsedUrl) {
     // Case 2: localhost(:port), use broad regex to match port part.
     // Case 3: Ipv4, use broad regex which just check if host contains Ipv4.
     // For valid host please refer to https://man7.org/linux/man-pages/man7/hostname.7.html.
-    return /^.*:.*:.*$|^localhost(:[0-9]+)?$|^(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])(\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])){3}(:[0-9]+)?$/.test(host);
+    return (/^.*:.*:.*$|^localhost(:[0-9]+)?$|^(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])(\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])){3}(:[0-9]+)?$/.test(host) ||
+        (parsedUrl.getPort() !== undefined && PathStylePorts.includes(parsedUrl.getPort())));
 }
 /**
  * Convert Tags to encoded string.
@@ -36840,6 +38708,16 @@ function* ExtractPageRangeInfoItems(getPageRangesSegment) {
             isClear: true,
         };
     }
+}
+/**
+ * Escape the blobName but keep path separator ('/').
+ */
+function EscapePath(blobName) {
+    const split = blobName.split("/");
+    for (let i = 0; i < split.length; i++) {
+        split[i] = encodeURIComponent(split[i]);
+    }
+    return split.join("/");
 }
 
 // Copyright (c) Microsoft Corporation.
@@ -37799,7 +39677,7 @@ class StorageSharedKeyCredential extends Credential {
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 const packageName = "azure-storage-blob";
-const packageVersion = "12.11.0";
+const packageVersion = "12.12.0";
 class StorageClientContext extends coreHttp__namespace.ServiceClient {
     /**
      * Initializes a new instance of the StorageClientContext class.
@@ -37825,7 +39703,7 @@ class StorageClientContext extends coreHttp__namespace.ServiceClient {
         // Parameter assignments
         this.url = url;
         // Assigning values to Constant parameters
-        this.version = options.version || "2021-08-06";
+        this.version = options.version || "2021-10-04";
     }
 }
 
@@ -41713,8 +43591,10 @@ async function streamToBuffer(stream, buffer, offset, end, encoding) {
     let pos = 0; // Position in stream
     const count = end - offset; // Total amount of data needed in stream
     return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error(`The operation cannot be completed in timeout.`)), REQUEST_TIMEOUT);
         stream.on("readable", () => {
             if (pos >= count) {
+                clearTimeout(timeout);
                 resolve();
                 return;
             }
@@ -41731,12 +43611,16 @@ async function streamToBuffer(stream, buffer, offset, end, encoding) {
             pos += chunkLength;
         });
         stream.on("end", () => {
+            clearTimeout(timeout);
             if (pos < count) {
                 reject(new Error(`Stream drains before getting enough data needed. Data read: ${pos}, data need: ${count}`));
             }
             resolve();
         });
-        stream.on("error", reject);
+        stream.on("error", (msg) => {
+            clearTimeout(timeout);
+            reject(msg);
+        });
     });
 }
 /**
@@ -45333,7 +47217,7 @@ class ContainerClient extends StorageClient {
      * @returns A new BlobClient object for the given blob name.
      */
     getBlobClient(blobName) {
-        return new BlobClient(appendToURLPath(this.url, encodeURIComponent(blobName)), this.pipeline);
+        return new BlobClient(appendToURLPath(this.url, EscapePath(blobName)), this.pipeline);
     }
     /**
      * Creates an {@link AppendBlobClient}
@@ -45341,7 +47225,7 @@ class ContainerClient extends StorageClient {
      * @param blobName - An append blob name
      */
     getAppendBlobClient(blobName) {
-        return new AppendBlobClient(appendToURLPath(this.url, encodeURIComponent(blobName)), this.pipeline);
+        return new AppendBlobClient(appendToURLPath(this.url, EscapePath(blobName)), this.pipeline);
     }
     /**
      * Creates a {@link BlockBlobClient}
@@ -45359,7 +47243,7 @@ class ContainerClient extends StorageClient {
      * ```
      */
     getBlockBlobClient(blobName) {
-        return new BlockBlobClient(appendToURLPath(this.url, encodeURIComponent(blobName)), this.pipeline);
+        return new BlockBlobClient(appendToURLPath(this.url, EscapePath(blobName)), this.pipeline);
     }
     /**
      * Creates a {@link PageBlobClient}
@@ -45367,7 +47251,7 @@ class ContainerClient extends StorageClient {
      * @param blobName - A page blob name
      */
     getPageBlobClient(blobName) {
-        return new PageBlobClient(appendToURLPath(this.url, encodeURIComponent(blobName)), this.pipeline);
+        return new PageBlobClient(appendToURLPath(this.url, EscapePath(blobName)), this.pipeline);
     }
     /**
      * Returns all user-defined metadata and system properties for the specified
@@ -47699,330 +49583,6 @@ exports.isPipelineLike = isPipelineLike;
 exports.logger = logger;
 exports.newPipeline = newPipeline;
 //# sourceMappingURL=index.js.map
-
-
-/***/ }),
-
-/***/ 679:
-/***/ ((module) => {
-
-/******************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-/* global global, define, System, Reflect, Promise */
-var __extends;
-var __assign;
-var __rest;
-var __decorate;
-var __param;
-var __metadata;
-var __awaiter;
-var __generator;
-var __exportStar;
-var __values;
-var __read;
-var __spread;
-var __spreadArrays;
-var __spreadArray;
-var __await;
-var __asyncGenerator;
-var __asyncDelegator;
-var __asyncValues;
-var __makeTemplateObject;
-var __importStar;
-var __importDefault;
-var __classPrivateFieldGet;
-var __classPrivateFieldSet;
-var __classPrivateFieldIn;
-var __createBinding;
-(function (factory) {
-    var root = typeof global === "object" ? global : typeof self === "object" ? self : typeof this === "object" ? this : {};
-    if (typeof define === "function" && define.amd) {
-        define("tslib", ["exports"], function (exports) { factory(createExporter(root, createExporter(exports))); });
-    }
-    else if ( true && typeof module.exports === "object") {
-        factory(createExporter(root, createExporter(module.exports)));
-    }
-    else {
-        factory(createExporter(root));
-    }
-    function createExporter(exports, previous) {
-        if (exports !== root) {
-            if (typeof Object.create === "function") {
-                Object.defineProperty(exports, "__esModule", { value: true });
-            }
-            else {
-                exports.__esModule = true;
-            }
-        }
-        return function (id, v) { return exports[id] = previous ? previous(id, v) : v; };
-    }
-})
-(function (exporter) {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-
-    __extends = function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-
-    __assign = Object.assign || function (t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
-        }
-        return t;
-    };
-
-    __rest = function (s, e) {
-        var t = {};
-        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-            t[p] = s[p];
-        if (s != null && typeof Object.getOwnPropertySymbols === "function")
-            for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-                if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                    t[p[i]] = s[p[i]];
-            }
-        return t;
-    };
-
-    __decorate = function (decorators, target, key, desc) {
-        var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-        if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-        else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-        return c > 3 && r && Object.defineProperty(target, key, r), r;
-    };
-
-    __param = function (paramIndex, decorator) {
-        return function (target, key) { decorator(target, key, paramIndex); }
-    };
-
-    __metadata = function (metadataKey, metadataValue) {
-        if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(metadataKey, metadataValue);
-    };
-
-    __awaiter = function (thisArg, _arguments, P, generator) {
-        function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-        return new (P || (P = Promise))(function (resolve, reject) {
-            function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-            function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-            function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-            step((generator = generator.apply(thisArg, _arguments || [])).next());
-        });
-    };
-
-    __generator = function (thisArg, body) {
-        var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-        return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-        function verb(n) { return function (v) { return step([n, v]); }; }
-        function step(op) {
-            if (f) throw new TypeError("Generator is already executing.");
-            while (_) try {
-                if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-                if (y = 0, t) op = [op[0] & 2, t.value];
-                switch (op[0]) {
-                    case 0: case 1: t = op; break;
-                    case 4: _.label++; return { value: op[1], done: false };
-                    case 5: _.label++; y = op[1]; op = [0]; continue;
-                    case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                    default:
-                        if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                        if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                        if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                        if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                        if (t[2]) _.ops.pop();
-                        _.trys.pop(); continue;
-                }
-                op = body.call(thisArg, _);
-            } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-            if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-        }
-    };
-
-    __exportStar = function(m, o) {
-        for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(o, p)) __createBinding(o, m, p);
-    };
-
-    __createBinding = Object.create ? (function(o, m, k, k2) {
-        if (k2 === undefined) k2 = k;
-        var desc = Object.getOwnPropertyDescriptor(m, k);
-        if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-            desc = { enumerable: true, get: function() { return m[k]; } };
-        }
-        Object.defineProperty(o, k2, desc);
-    }) : (function(o, m, k, k2) {
-        if (k2 === undefined) k2 = k;
-        o[k2] = m[k];
-    });
-
-    __values = function (o) {
-        var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
-        if (m) return m.call(o);
-        if (o && typeof o.length === "number") return {
-            next: function () {
-                if (o && i >= o.length) o = void 0;
-                return { value: o && o[i++], done: !o };
-            }
-        };
-        throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
-    };
-
-    __read = function (o, n) {
-        var m = typeof Symbol === "function" && o[Symbol.iterator];
-        if (!m) return o;
-        var i = m.call(o), r, ar = [], e;
-        try {
-            while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
-        }
-        catch (error) { e = { error: error }; }
-        finally {
-            try {
-                if (r && !r.done && (m = i["return"])) m.call(i);
-            }
-            finally { if (e) throw e.error; }
-        }
-        return ar;
-    };
-
-    /** @deprecated */
-    __spread = function () {
-        for (var ar = [], i = 0; i < arguments.length; i++)
-            ar = ar.concat(__read(arguments[i]));
-        return ar;
-    };
-
-    /** @deprecated */
-    __spreadArrays = function () {
-        for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-        for (var r = Array(s), k = 0, i = 0; i < il; i++)
-            for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-                r[k] = a[j];
-        return r;
-    };
-
-    __spreadArray = function (to, from, pack) {
-        if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-            if (ar || !(i in from)) {
-                if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-                ar[i] = from[i];
-            }
-        }
-        return to.concat(ar || Array.prototype.slice.call(from));
-    };
-
-    __await = function (v) {
-        return this instanceof __await ? (this.v = v, this) : new __await(v);
-    };
-
-    __asyncGenerator = function (thisArg, _arguments, generator) {
-        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-        var g = generator.apply(thisArg, _arguments || []), i, q = [];
-        return i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i;
-        function verb(n) { if (g[n]) i[n] = function (v) { return new Promise(function (a, b) { q.push([n, v, a, b]) > 1 || resume(n, v); }); }; }
-        function resume(n, v) { try { step(g[n](v)); } catch (e) { settle(q[0][3], e); } }
-        function step(r) { r.value instanceof __await ? Promise.resolve(r.value.v).then(fulfill, reject) : settle(q[0][2], r);  }
-        function fulfill(value) { resume("next", value); }
-        function reject(value) { resume("throw", value); }
-        function settle(f, v) { if (f(v), q.shift(), q.length) resume(q[0][0], q[0][1]); }
-    };
-
-    __asyncDelegator = function (o) {
-        var i, p;
-        return i = {}, verb("next"), verb("throw", function (e) { throw e; }), verb("return"), i[Symbol.iterator] = function () { return this; }, i;
-        function verb(n, f) { i[n] = o[n] ? function (v) { return (p = !p) ? { value: __await(o[n](v)), done: n === "return" } : f ? f(v) : v; } : f; }
-    };
-
-    __asyncValues = function (o) {
-        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-        var m = o[Symbol.asyncIterator], i;
-        return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
-        function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
-        function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
-    };
-
-    __makeTemplateObject = function (cooked, raw) {
-        if (Object.defineProperty) { Object.defineProperty(cooked, "raw", { value: raw }); } else { cooked.raw = raw; }
-        return cooked;
-    };
-
-    var __setModuleDefault = Object.create ? (function(o, v) {
-        Object.defineProperty(o, "default", { enumerable: true, value: v });
-    }) : function(o, v) {
-        o["default"] = v;
-    };
-
-    __importStar = function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-
-    __importDefault = function (mod) {
-        return (mod && mod.__esModule) ? mod : { "default": mod };
-    };
-
-    __classPrivateFieldGet = function (receiver, state, kind, f) {
-        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
-        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-        return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
-    };
-
-    __classPrivateFieldSet = function (receiver, state, value, kind, f) {
-        if (kind === "m") throw new TypeError("Private method is not writable");
-        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
-        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-        return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
-    };
-
-    __classPrivateFieldIn = function (state, receiver) {
-        if (receiver === null || (typeof receiver !== "object" && typeof receiver !== "function")) throw new TypeError("Cannot use 'in' operator on non-object");
-        return typeof state === "function" ? receiver === state : state.has(receiver);
-    };
-
-    exporter("__extends", __extends);
-    exporter("__assign", __assign);
-    exporter("__rest", __rest);
-    exporter("__decorate", __decorate);
-    exporter("__param", __param);
-    exporter("__metadata", __metadata);
-    exporter("__awaiter", __awaiter);
-    exporter("__generator", __generator);
-    exporter("__exportStar", __exportStar);
-    exporter("__createBinding", __createBinding);
-    exporter("__values", __values);
-    exporter("__read", __read);
-    exporter("__spread", __spread);
-    exporter("__spreadArrays", __spreadArrays);
-    exporter("__spreadArray", __spreadArray);
-    exporter("__await", __await);
-    exporter("__asyncGenerator", __asyncGenerator);
-    exporter("__asyncDelegator", __asyncDelegator);
-    exporter("__asyncValues", __asyncValues);
-    exporter("__makeTemplateObject", __makeTemplateObject);
-    exporter("__importStar", __importStar);
-    exporter("__importDefault", __importDefault);
-    exporter("__classPrivateFieldGet", __classPrivateFieldGet);
-    exporter("__classPrivateFieldSet", __classPrivateFieldSet);
-    exporter("__classPrivateFieldIn", __classPrivateFieldIn);
-});
 
 
 /***/ }),
@@ -50730,6 +52290,7 @@ var TraceAPI = /** @class */ (function () {
         this.isSpanContextValid = spancontext_utils_1.isSpanContextValid;
         this.deleteSpan = context_utils_1.deleteSpan;
         this.getSpan = context_utils_1.getSpan;
+        this.getActiveSpan = context_utils_1.getActiveSpan;
         this.getSpanContext = context_utils_1.getSpanContext;
         this.setSpan = context_utils_1.setSpan;
         this.setSpanContext = context_utils_1.setSpanContext;
@@ -52386,6 +53947,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.SamplingDecision = void 0;
 /**
+ * @deprecated use the one declared in @opentelemetry/sdk-trace-base instead.
  * A sampling decision that determines how a {@link Span} will be recorded
  * and collected.
  */
@@ -52482,9 +54044,10 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getSpanContext = exports.setSpanContext = exports.deleteSpan = exports.setSpan = exports.getSpan = void 0;
+exports.getSpanContext = exports.setSpanContext = exports.deleteSpan = exports.setSpan = exports.getActiveSpan = exports.getSpan = void 0;
 var context_1 = __nccwpck_require__(8242);
 var NonRecordingSpan_1 = __nccwpck_require__(1462);
+var context_2 = __nccwpck_require__(7171);
 /**
  * span key
  */
@@ -52498,6 +54061,13 @@ function getSpan(context) {
     return context.getValue(SPAN_KEY) || undefined;
 }
 exports.getSpan = getSpan;
+/**
+ * Gets the span from the current context, if one exists.
+ */
+function getActiveSpan() {
+    return getSpan(context_2.ContextAPI.getInstance().active());
+}
+exports.getActiveSpan = getActiveSpan;
 /**
  * Set the span on a context
  *
@@ -53142,7 +54712,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.VERSION = void 0;
 // this is autogenerated file, see scripts/version-update.js
-exports.VERSION = '1.1.0';
+exports.VERSION = '1.2.0';
 //# sourceMappingURL=version.js.map
 
 /***/ }),
@@ -57981,6 +59551,626 @@ exports.isValid = function (domain) {
 
 /***/ }),
 
+/***/ 9540:
+/***/ ((module) => {
+
+"use strict";
+
+
+/** Highest positive signed 32-bit float value */
+const maxInt = 2147483647; // aka. 0x7FFFFFFF or 2^31-1
+
+/** Bootstring parameters */
+const base = 36;
+const tMin = 1;
+const tMax = 26;
+const skew = 38;
+const damp = 700;
+const initialBias = 72;
+const initialN = 128; // 0x80
+const delimiter = '-'; // '\x2D'
+
+/** Regular expressions */
+const regexPunycode = /^xn--/;
+const regexNonASCII = /[^\0-\x7E]/; // non-ASCII chars
+const regexSeparators = /[\x2E\u3002\uFF0E\uFF61]/g; // RFC 3490 separators
+
+/** Error messages */
+const errors = {
+	'overflow': 'Overflow: input needs wider integers to process',
+	'not-basic': 'Illegal input >= 0x80 (not a basic code point)',
+	'invalid-input': 'Invalid input'
+};
+
+/** Convenience shortcuts */
+const baseMinusTMin = base - tMin;
+const floor = Math.floor;
+const stringFromCharCode = String.fromCharCode;
+
+/*--------------------------------------------------------------------------*/
+
+/**
+ * A generic error utility function.
+ * @private
+ * @param {String} type The error type.
+ * @returns {Error} Throws a `RangeError` with the applicable error message.
+ */
+function error(type) {
+	throw new RangeError(errors[type]);
+}
+
+/**
+ * A generic `Array#map` utility function.
+ * @private
+ * @param {Array} array The array to iterate over.
+ * @param {Function} callback The function that gets called for every array
+ * item.
+ * @returns {Array} A new array of values returned by the callback function.
+ */
+function map(array, fn) {
+	const result = [];
+	let length = array.length;
+	while (length--) {
+		result[length] = fn(array[length]);
+	}
+	return result;
+}
+
+/**
+ * A simple `Array#map`-like wrapper to work with domain name strings or email
+ * addresses.
+ * @private
+ * @param {String} domain The domain name or email address.
+ * @param {Function} callback The function that gets called for every
+ * character.
+ * @returns {Array} A new string of characters returned by the callback
+ * function.
+ */
+function mapDomain(string, fn) {
+	const parts = string.split('@');
+	let result = '';
+	if (parts.length > 1) {
+		// In email addresses, only the domain name should be punycoded. Leave
+		// the local part (i.e. everything up to `@`) intact.
+		result = parts[0] + '@';
+		string = parts[1];
+	}
+	// Avoid `split(regex)` for IE8 compatibility. See #17.
+	string = string.replace(regexSeparators, '\x2E');
+	const labels = string.split('.');
+	const encoded = map(labels, fn).join('.');
+	return result + encoded;
+}
+
+/**
+ * Creates an array containing the numeric code points of each Unicode
+ * character in the string. While JavaScript uses UCS-2 internally,
+ * this function will convert a pair of surrogate halves (each of which
+ * UCS-2 exposes as separate characters) into a single code point,
+ * matching UTF-16.
+ * @see `punycode.ucs2.encode`
+ * @see <https://mathiasbynens.be/notes/javascript-encoding>
+ * @memberOf punycode.ucs2
+ * @name decode
+ * @param {String} string The Unicode input string (UCS-2).
+ * @returns {Array} The new array of code points.
+ */
+function ucs2decode(string) {
+	const output = [];
+	let counter = 0;
+	const length = string.length;
+	while (counter < length) {
+		const value = string.charCodeAt(counter++);
+		if (value >= 0xD800 && value <= 0xDBFF && counter < length) {
+			// It's a high surrogate, and there is a next character.
+			const extra = string.charCodeAt(counter++);
+			if ((extra & 0xFC00) == 0xDC00) { // Low surrogate.
+				output.push(((value & 0x3FF) << 10) + (extra & 0x3FF) + 0x10000);
+			} else {
+				// It's an unmatched surrogate; only append this code unit, in case the
+				// next code unit is the high surrogate of a surrogate pair.
+				output.push(value);
+				counter--;
+			}
+		} else {
+			output.push(value);
+		}
+	}
+	return output;
+}
+
+/**
+ * Creates a string based on an array of numeric code points.
+ * @see `punycode.ucs2.decode`
+ * @memberOf punycode.ucs2
+ * @name encode
+ * @param {Array} codePoints The array of numeric code points.
+ * @returns {String} The new Unicode string (UCS-2).
+ */
+const ucs2encode = array => String.fromCodePoint(...array);
+
+/**
+ * Converts a basic code point into a digit/integer.
+ * @see `digitToBasic()`
+ * @private
+ * @param {Number} codePoint The basic numeric code point value.
+ * @returns {Number} The numeric value of a basic code point (for use in
+ * representing integers) in the range `0` to `base - 1`, or `base` if
+ * the code point does not represent a value.
+ */
+const basicToDigit = function(codePoint) {
+	if (codePoint - 0x30 < 0x0A) {
+		return codePoint - 0x16;
+	}
+	if (codePoint - 0x41 < 0x1A) {
+		return codePoint - 0x41;
+	}
+	if (codePoint - 0x61 < 0x1A) {
+		return codePoint - 0x61;
+	}
+	return base;
+};
+
+/**
+ * Converts a digit/integer into a basic code point.
+ * @see `basicToDigit()`
+ * @private
+ * @param {Number} digit The numeric value of a basic code point.
+ * @returns {Number} The basic code point whose value (when used for
+ * representing integers) is `digit`, which needs to be in the range
+ * `0` to `base - 1`. If `flag` is non-zero, the uppercase form is
+ * used; else, the lowercase form is used. The behavior is undefined
+ * if `flag` is non-zero and `digit` has no uppercase form.
+ */
+const digitToBasic = function(digit, flag) {
+	//  0..25 map to ASCII a..z or A..Z
+	// 26..35 map to ASCII 0..9
+	return digit + 22 + 75 * (digit < 26) - ((flag != 0) << 5);
+};
+
+/**
+ * Bias adaptation function as per section 3.4 of RFC 3492.
+ * https://tools.ietf.org/html/rfc3492#section-3.4
+ * @private
+ */
+const adapt = function(delta, numPoints, firstTime) {
+	let k = 0;
+	delta = firstTime ? floor(delta / damp) : delta >> 1;
+	delta += floor(delta / numPoints);
+	for (/* no initialization */; delta > baseMinusTMin * tMax >> 1; k += base) {
+		delta = floor(delta / baseMinusTMin);
+	}
+	return floor(k + (baseMinusTMin + 1) * delta / (delta + skew));
+};
+
+/**
+ * Converts a Punycode string of ASCII-only symbols to a string of Unicode
+ * symbols.
+ * @memberOf punycode
+ * @param {String} input The Punycode string of ASCII-only symbols.
+ * @returns {String} The resulting string of Unicode symbols.
+ */
+const decode = function(input) {
+	// Don't use UCS-2.
+	const output = [];
+	const inputLength = input.length;
+	let i = 0;
+	let n = initialN;
+	let bias = initialBias;
+
+	// Handle the basic code points: let `basic` be the number of input code
+	// points before the last delimiter, or `0` if there is none, then copy
+	// the first basic code points to the output.
+
+	let basic = input.lastIndexOf(delimiter);
+	if (basic < 0) {
+		basic = 0;
+	}
+
+	for (let j = 0; j < basic; ++j) {
+		// if it's not a basic code point
+		if (input.charCodeAt(j) >= 0x80) {
+			error('not-basic');
+		}
+		output.push(input.charCodeAt(j));
+	}
+
+	// Main decoding loop: start just after the last delimiter if any basic code
+	// points were copied; start at the beginning otherwise.
+
+	for (let index = basic > 0 ? basic + 1 : 0; index < inputLength; /* no final expression */) {
+
+		// `index` is the index of the next character to be consumed.
+		// Decode a generalized variable-length integer into `delta`,
+		// which gets added to `i`. The overflow checking is easier
+		// if we increase `i` as we go, then subtract off its starting
+		// value at the end to obtain `delta`.
+		let oldi = i;
+		for (let w = 1, k = base; /* no condition */; k += base) {
+
+			if (index >= inputLength) {
+				error('invalid-input');
+			}
+
+			const digit = basicToDigit(input.charCodeAt(index++));
+
+			if (digit >= base || digit > floor((maxInt - i) / w)) {
+				error('overflow');
+			}
+
+			i += digit * w;
+			const t = k <= bias ? tMin : (k >= bias + tMax ? tMax : k - bias);
+
+			if (digit < t) {
+				break;
+			}
+
+			const baseMinusT = base - t;
+			if (w > floor(maxInt / baseMinusT)) {
+				error('overflow');
+			}
+
+			w *= baseMinusT;
+
+		}
+
+		const out = output.length + 1;
+		bias = adapt(i - oldi, out, oldi == 0);
+
+		// `i` was supposed to wrap around from `out` to `0`,
+		// incrementing `n` each time, so we'll fix that now:
+		if (floor(i / out) > maxInt - n) {
+			error('overflow');
+		}
+
+		n += floor(i / out);
+		i %= out;
+
+		// Insert `n` at position `i` of the output.
+		output.splice(i++, 0, n);
+
+	}
+
+	return String.fromCodePoint(...output);
+};
+
+/**
+ * Converts a string of Unicode symbols (e.g. a domain name label) to a
+ * Punycode string of ASCII-only symbols.
+ * @memberOf punycode
+ * @param {String} input The string of Unicode symbols.
+ * @returns {String} The resulting Punycode string of ASCII-only symbols.
+ */
+const encode = function(input) {
+	const output = [];
+
+	// Convert the input in UCS-2 to an array of Unicode code points.
+	input = ucs2decode(input);
+
+	// Cache the length.
+	let inputLength = input.length;
+
+	// Initialize the state.
+	let n = initialN;
+	let delta = 0;
+	let bias = initialBias;
+
+	// Handle the basic code points.
+	for (const currentValue of input) {
+		if (currentValue < 0x80) {
+			output.push(stringFromCharCode(currentValue));
+		}
+	}
+
+	let basicLength = output.length;
+	let handledCPCount = basicLength;
+
+	// `handledCPCount` is the number of code points that have been handled;
+	// `basicLength` is the number of basic code points.
+
+	// Finish the basic string with a delimiter unless it's empty.
+	if (basicLength) {
+		output.push(delimiter);
+	}
+
+	// Main encoding loop:
+	while (handledCPCount < inputLength) {
+
+		// All non-basic code points < n have been handled already. Find the next
+		// larger one:
+		let m = maxInt;
+		for (const currentValue of input) {
+			if (currentValue >= n && currentValue < m) {
+				m = currentValue;
+			}
+		}
+
+		// Increase `delta` enough to advance the decoder's <n,i> state to <m,0>,
+		// but guard against overflow.
+		const handledCPCountPlusOne = handledCPCount + 1;
+		if (m - n > floor((maxInt - delta) / handledCPCountPlusOne)) {
+			error('overflow');
+		}
+
+		delta += (m - n) * handledCPCountPlusOne;
+		n = m;
+
+		for (const currentValue of input) {
+			if (currentValue < n && ++delta > maxInt) {
+				error('overflow');
+			}
+			if (currentValue == n) {
+				// Represent delta as a generalized variable-length integer.
+				let q = delta;
+				for (let k = base; /* no condition */; k += base) {
+					const t = k <= bias ? tMin : (k >= bias + tMax ? tMax : k - bias);
+					if (q < t) {
+						break;
+					}
+					const qMinusT = q - t;
+					const baseMinusT = base - t;
+					output.push(
+						stringFromCharCode(digitToBasic(t + qMinusT % baseMinusT, 0))
+					);
+					q = floor(qMinusT / baseMinusT);
+				}
+
+				output.push(stringFromCharCode(digitToBasic(q, 0)));
+				bias = adapt(delta, handledCPCountPlusOne, handledCPCount == basicLength);
+				delta = 0;
+				++handledCPCount;
+			}
+		}
+
+		++delta;
+		++n;
+
+	}
+	return output.join('');
+};
+
+/**
+ * Converts a Punycode string representing a domain name or an email address
+ * to Unicode. Only the Punycoded parts of the input will be converted, i.e.
+ * it doesn't matter if you call it on a string that has already been
+ * converted to Unicode.
+ * @memberOf punycode
+ * @param {String} input The Punycoded domain name or email address to
+ * convert to Unicode.
+ * @returns {String} The Unicode representation of the given Punycode
+ * string.
+ */
+const toUnicode = function(input) {
+	return mapDomain(input, function(string) {
+		return regexPunycode.test(string)
+			? decode(string.slice(4).toLowerCase())
+			: string;
+	});
+};
+
+/**
+ * Converts a Unicode string representing a domain name or an email address to
+ * Punycode. Only the non-ASCII parts of the domain name will be converted,
+ * i.e. it doesn't matter if you call it with a domain that's already in
+ * ASCII.
+ * @memberOf punycode
+ * @param {String} input The domain name or email address to convert, as a
+ * Unicode string.
+ * @returns {String} The Punycode representation of the given domain name or
+ * email address.
+ */
+const toASCII = function(input) {
+	return mapDomain(input, function(string) {
+		return regexNonASCII.test(string)
+			? 'xn--' + encode(string)
+			: string;
+	});
+};
+
+/*--------------------------------------------------------------------------*/
+
+/** Define the public API */
+const punycode = {
+	/**
+	 * A string representing the current Punycode.js version number.
+	 * @memberOf punycode
+	 * @type String
+	 */
+	'version': '2.1.0',
+	/**
+	 * An object of methods to convert from JavaScript's internal character
+	 * representation (UCS-2) to Unicode code points, and back.
+	 * @see <https://mathiasbynens.be/notes/javascript-encoding>
+	 * @memberOf punycode
+	 * @type Object
+	 */
+	'ucs2': {
+		'decode': ucs2decode,
+		'encode': ucs2encode
+	},
+	'decode': decode,
+	'encode': encode,
+	'toASCII': toASCII,
+	'toUnicode': toUnicode
+};
+
+module.exports = punycode;
+
+
+/***/ }),
+
+/***/ 3319:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+var has = Object.prototype.hasOwnProperty
+  , undef;
+
+/**
+ * Decode a URI encoded string.
+ *
+ * @param {String} input The URI encoded string.
+ * @returns {String|Null} The decoded string.
+ * @api private
+ */
+function decode(input) {
+  try {
+    return decodeURIComponent(input.replace(/\+/g, ' '));
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
+ * Attempts to encode a given input.
+ *
+ * @param {String} input The string that needs to be encoded.
+ * @returns {String|Null} The encoded string.
+ * @api private
+ */
+function encode(input) {
+  try {
+    return encodeURIComponent(input);
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
+ * Simple query string parser.
+ *
+ * @param {String} query The query string that needs to be parsed.
+ * @returns {Object}
+ * @api public
+ */
+function querystring(query) {
+  var parser = /([^=?#&]+)=?([^&]*)/g
+    , result = {}
+    , part;
+
+  while (part = parser.exec(query)) {
+    var key = decode(part[1])
+      , value = decode(part[2]);
+
+    //
+    // Prevent overriding of existing properties. This ensures that build-in
+    // methods like `toString` or __proto__ are not overriden by malicious
+    // querystrings.
+    //
+    // In the case if failed decoding, we want to omit the key/value pairs
+    // from the result.
+    //
+    if (key === null || value === null || key in result) continue;
+    result[key] = value;
+  }
+
+  return result;
+}
+
+/**
+ * Transform a query string to an object.
+ *
+ * @param {Object} obj Object that should be transformed.
+ * @param {String} prefix Optional prefix.
+ * @returns {String}
+ * @api public
+ */
+function querystringify(obj, prefix) {
+  prefix = prefix || '';
+
+  var pairs = []
+    , value
+    , key;
+
+  //
+  // Optionally prefix with a '?' if needed
+  //
+  if ('string' !== typeof prefix) prefix = '?';
+
+  for (key in obj) {
+    if (has.call(obj, key)) {
+      value = obj[key];
+
+      //
+      // Edge cases where we actually want to encode the value to an empty
+      // string instead of the stringified value.
+      //
+      if (!value && (value === null || value === undef || isNaN(value))) {
+        value = '';
+      }
+
+      key = encode(key);
+      value = encode(value);
+
+      //
+      // If we failed to encode the strings, we should bail out as we don't
+      // want to add invalid strings to the query.
+      //
+      if (key === null || value === null) continue;
+      pairs.push(key +'='+ value);
+    }
+  }
+
+  return pairs.length ? prefix + pairs.join('&') : '';
+}
+
+//
+// Expose the module.
+//
+exports.stringify = querystringify;
+exports.parse = querystring;
+
+
+/***/ }),
+
+/***/ 4742:
+/***/ ((module) => {
+
+"use strict";
+
+
+/**
+ * Check if we're required to add a port number.
+ *
+ * @see https://url.spec.whatwg.org/#default-port
+ * @param {Number|String} port Port number we need to check
+ * @param {String} protocol Protocol we need to check against.
+ * @returns {Boolean} Is it a default port for the given protocol
+ * @api private
+ */
+module.exports = function required(port, protocol) {
+  protocol = protocol.split(':')[0];
+  port = +port;
+
+  if (!port) return false;
+
+  switch (protocol) {
+    case 'http':
+    case 'ws':
+    return port !== 80;
+
+    case 'https':
+    case 'wss':
+    return port !== 443;
+
+    case 'ftp':
+    return port !== 21;
+
+    case 'gopher':
+    return port !== 70;
+
+    case 'file':
+    return false;
+  }
+
+  return port !== 0;
+};
+
+
+/***/ }),
+
 /***/ 2043:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -62109,6 +64299,330 @@ module.exports.PROCESSING_OPTIONS = PROCESSING_OPTIONS;
 
 /***/ }),
 
+/***/ 4351:
+/***/ ((module) => {
+
+/******************************************************************************
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+***************************************************************************** */
+/* global global, define, System, Reflect, Promise */
+var __extends;
+var __assign;
+var __rest;
+var __decorate;
+var __param;
+var __metadata;
+var __awaiter;
+var __generator;
+var __exportStar;
+var __values;
+var __read;
+var __spread;
+var __spreadArrays;
+var __spreadArray;
+var __await;
+var __asyncGenerator;
+var __asyncDelegator;
+var __asyncValues;
+var __makeTemplateObject;
+var __importStar;
+var __importDefault;
+var __classPrivateFieldGet;
+var __classPrivateFieldSet;
+var __classPrivateFieldIn;
+var __createBinding;
+(function (factory) {
+    var root = typeof global === "object" ? global : typeof self === "object" ? self : typeof this === "object" ? this : {};
+    if (typeof define === "function" && define.amd) {
+        define("tslib", ["exports"], function (exports) { factory(createExporter(root, createExporter(exports))); });
+    }
+    else if ( true && typeof module.exports === "object") {
+        factory(createExporter(root, createExporter(module.exports)));
+    }
+    else {
+        factory(createExporter(root));
+    }
+    function createExporter(exports, previous) {
+        if (exports !== root) {
+            if (typeof Object.create === "function") {
+                Object.defineProperty(exports, "__esModule", { value: true });
+            }
+            else {
+                exports.__esModule = true;
+            }
+        }
+        return function (id, v) { return exports[id] = previous ? previous(id, v) : v; };
+    }
+})
+(function (exporter) {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+
+    __extends = function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+
+    __assign = Object.assign || function (t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+        }
+        return t;
+    };
+
+    __rest = function (s, e) {
+        var t = {};
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+            t[p] = s[p];
+        if (s != null && typeof Object.getOwnPropertySymbols === "function")
+            for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+                if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                    t[p[i]] = s[p[i]];
+            }
+        return t;
+    };
+
+    __decorate = function (decorators, target, key, desc) {
+        var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+        if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+        else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+        return c > 3 && r && Object.defineProperty(target, key, r), r;
+    };
+
+    __param = function (paramIndex, decorator) {
+        return function (target, key) { decorator(target, key, paramIndex); }
+    };
+
+    __metadata = function (metadataKey, metadataValue) {
+        if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(metadataKey, metadataValue);
+    };
+
+    __awaiter = function (thisArg, _arguments, P, generator) {
+        function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+        return new (P || (P = Promise))(function (resolve, reject) {
+            function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+            function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+            function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+            step((generator = generator.apply(thisArg, _arguments || [])).next());
+        });
+    };
+
+    __generator = function (thisArg, body) {
+        var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+        return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+        function verb(n) { return function (v) { return step([n, v]); }; }
+        function step(op) {
+            if (f) throw new TypeError("Generator is already executing.");
+            while (_) try {
+                if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+                if (y = 0, t) op = [op[0] & 2, t.value];
+                switch (op[0]) {
+                    case 0: case 1: t = op; break;
+                    case 4: _.label++; return { value: op[1], done: false };
+                    case 5: _.label++; y = op[1]; op = [0]; continue;
+                    case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                    default:
+                        if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                        if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                        if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                        if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                        if (t[2]) _.ops.pop();
+                        _.trys.pop(); continue;
+                }
+                op = body.call(thisArg, _);
+            } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+            if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+        }
+    };
+
+    __exportStar = function(m, o) {
+        for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(o, p)) __createBinding(o, m, p);
+    };
+
+    __createBinding = Object.create ? (function(o, m, k, k2) {
+        if (k2 === undefined) k2 = k;
+        var desc = Object.getOwnPropertyDescriptor(m, k);
+        if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+            desc = { enumerable: true, get: function() { return m[k]; } };
+        }
+        Object.defineProperty(o, k2, desc);
+    }) : (function(o, m, k, k2) {
+        if (k2 === undefined) k2 = k;
+        o[k2] = m[k];
+    });
+
+    __values = function (o) {
+        var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
+        if (m) return m.call(o);
+        if (o && typeof o.length === "number") return {
+            next: function () {
+                if (o && i >= o.length) o = void 0;
+                return { value: o && o[i++], done: !o };
+            }
+        };
+        throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+    };
+
+    __read = function (o, n) {
+        var m = typeof Symbol === "function" && o[Symbol.iterator];
+        if (!m) return o;
+        var i = m.call(o), r, ar = [], e;
+        try {
+            while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+        }
+        catch (error) { e = { error: error }; }
+        finally {
+            try {
+                if (r && !r.done && (m = i["return"])) m.call(i);
+            }
+            finally { if (e) throw e.error; }
+        }
+        return ar;
+    };
+
+    /** @deprecated */
+    __spread = function () {
+        for (var ar = [], i = 0; i < arguments.length; i++)
+            ar = ar.concat(__read(arguments[i]));
+        return ar;
+    };
+
+    /** @deprecated */
+    __spreadArrays = function () {
+        for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+        for (var r = Array(s), k = 0, i = 0; i < il; i++)
+            for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+                r[k] = a[j];
+        return r;
+    };
+
+    __spreadArray = function (to, from, pack) {
+        if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+            if (ar || !(i in from)) {
+                if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+                ar[i] = from[i];
+            }
+        }
+        return to.concat(ar || Array.prototype.slice.call(from));
+    };
+
+    __await = function (v) {
+        return this instanceof __await ? (this.v = v, this) : new __await(v);
+    };
+
+    __asyncGenerator = function (thisArg, _arguments, generator) {
+        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+        var g = generator.apply(thisArg, _arguments || []), i, q = [];
+        return i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i;
+        function verb(n) { if (g[n]) i[n] = function (v) { return new Promise(function (a, b) { q.push([n, v, a, b]) > 1 || resume(n, v); }); }; }
+        function resume(n, v) { try { step(g[n](v)); } catch (e) { settle(q[0][3], e); } }
+        function step(r) { r.value instanceof __await ? Promise.resolve(r.value.v).then(fulfill, reject) : settle(q[0][2], r);  }
+        function fulfill(value) { resume("next", value); }
+        function reject(value) { resume("throw", value); }
+        function settle(f, v) { if (f(v), q.shift(), q.length) resume(q[0][0], q[0][1]); }
+    };
+
+    __asyncDelegator = function (o) {
+        var i, p;
+        return i = {}, verb("next"), verb("throw", function (e) { throw e; }), verb("return"), i[Symbol.iterator] = function () { return this; }, i;
+        function verb(n, f) { i[n] = o[n] ? function (v) { return (p = !p) ? { value: __await(o[n](v)), done: n === "return" } : f ? f(v) : v; } : f; }
+    };
+
+    __asyncValues = function (o) {
+        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+        var m = o[Symbol.asyncIterator], i;
+        return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
+        function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
+        function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
+    };
+
+    __makeTemplateObject = function (cooked, raw) {
+        if (Object.defineProperty) { Object.defineProperty(cooked, "raw", { value: raw }); } else { cooked.raw = raw; }
+        return cooked;
+    };
+
+    var __setModuleDefault = Object.create ? (function(o, v) {
+        Object.defineProperty(o, "default", { enumerable: true, value: v });
+    }) : function(o, v) {
+        o["default"] = v;
+    };
+
+    __importStar = function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+
+    __importDefault = function (mod) {
+        return (mod && mod.__esModule) ? mod : { "default": mod };
+    };
+
+    __classPrivateFieldGet = function (receiver, state, kind, f) {
+        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+        return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+    };
+
+    __classPrivateFieldSet = function (receiver, state, value, kind, f) {
+        if (kind === "m") throw new TypeError("Private method is not writable");
+        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+        return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
+    };
+
+    __classPrivateFieldIn = function (state, receiver) {
+        if (receiver === null || (typeof receiver !== "object" && typeof receiver !== "function")) throw new TypeError("Cannot use 'in' operator on non-object");
+        return typeof state === "function" ? receiver === state : state.has(receiver);
+    };
+
+    exporter("__extends", __extends);
+    exporter("__assign", __assign);
+    exporter("__rest", __rest);
+    exporter("__decorate", __decorate);
+    exporter("__param", __param);
+    exporter("__metadata", __metadata);
+    exporter("__awaiter", __awaiter);
+    exporter("__generator", __generator);
+    exporter("__exportStar", __exportStar);
+    exporter("__createBinding", __createBinding);
+    exporter("__values", __values);
+    exporter("__read", __read);
+    exporter("__spread", __spread);
+    exporter("__spreadArrays", __spreadArrays);
+    exporter("__spreadArray", __spreadArray);
+    exporter("__await", __await);
+    exporter("__asyncGenerator", __asyncGenerator);
+    exporter("__asyncDelegator", __asyncDelegator);
+    exporter("__asyncValues", __asyncValues);
+    exporter("__makeTemplateObject", __makeTemplateObject);
+    exporter("__importStar", __importStar);
+    exporter("__importDefault", __importDefault);
+    exporter("__classPrivateFieldGet", __classPrivateFieldGet);
+    exporter("__classPrivateFieldSet", __classPrivateFieldSet);
+    exporter("__classPrivateFieldIn", __classPrivateFieldIn);
+});
+
+
+/***/ }),
+
 /***/ 4294:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -62441,9 +64955,610 @@ exports.fromPromise = function (fn) {
   return Object.defineProperty(function () {
     const cb = arguments[arguments.length - 1]
     if (typeof cb !== 'function') return fn.apply(this, arguments)
-    else fn.apply(this, arguments).then(r => cb(null, r), cb)
+    else {
+      delete arguments[arguments.length - 1]
+      arguments.length--
+      fn.apply(this, arguments).then(r => cb(null, r), cb)
+    }
   }, 'name', { value: fn.name })
 }
+
+
+/***/ }),
+
+/***/ 5682:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+var required = __nccwpck_require__(4742)
+  , qs = __nccwpck_require__(3319)
+  , controlOrWhitespace = /^[\x00-\x20\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]+/
+  , CRHTLF = /[\n\r\t]/g
+  , slashes = /^[A-Za-z][A-Za-z0-9+-.]*:\/\//
+  , port = /:\d+$/
+  , protocolre = /^([a-z][a-z0-9.+-]*:)?(\/\/)?([\\/]+)?([\S\s]*)/i
+  , windowsDriveLetter = /^[a-zA-Z]:/;
+
+/**
+ * Remove control characters and whitespace from the beginning of a string.
+ *
+ * @param {Object|String} str String to trim.
+ * @returns {String} A new string representing `str` stripped of control
+ *     characters and whitespace from its beginning.
+ * @public
+ */
+function trimLeft(str) {
+  return (str ? str : '').toString().replace(controlOrWhitespace, '');
+}
+
+/**
+ * These are the parse rules for the URL parser, it informs the parser
+ * about:
+ *
+ * 0. The char it Needs to parse, if it's a string it should be done using
+ *    indexOf, RegExp using exec and NaN means set as current value.
+ * 1. The property we should set when parsing this value.
+ * 2. Indication if it's backwards or forward parsing, when set as number it's
+ *    the value of extra chars that should be split off.
+ * 3. Inherit from location if non existing in the parser.
+ * 4. `toLowerCase` the resulting value.
+ */
+var rules = [
+  ['#', 'hash'],                        // Extract from the back.
+  ['?', 'query'],                       // Extract from the back.
+  function sanitize(address, url) {     // Sanitize what is left of the address
+    return isSpecial(url.protocol) ? address.replace(/\\/g, '/') : address;
+  },
+  ['/', 'pathname'],                    // Extract from the back.
+  ['@', 'auth', 1],                     // Extract from the front.
+  [NaN, 'host', undefined, 1, 1],       // Set left over value.
+  [/:(\d*)$/, 'port', undefined, 1],    // RegExp the back.
+  [NaN, 'hostname', undefined, 1, 1]    // Set left over.
+];
+
+/**
+ * These properties should not be copied or inherited from. This is only needed
+ * for all non blob URL's as a blob URL does not include a hash, only the
+ * origin.
+ *
+ * @type {Object}
+ * @private
+ */
+var ignore = { hash: 1, query: 1 };
+
+/**
+ * The location object differs when your code is loaded through a normal page,
+ * Worker or through a worker using a blob. And with the blobble begins the
+ * trouble as the location object will contain the URL of the blob, not the
+ * location of the page where our code is loaded in. The actual origin is
+ * encoded in the `pathname` so we can thankfully generate a good "default"
+ * location from it so we can generate proper relative URL's again.
+ *
+ * @param {Object|String} loc Optional default location object.
+ * @returns {Object} lolcation object.
+ * @public
+ */
+function lolcation(loc) {
+  var globalVar;
+
+  if (typeof window !== 'undefined') globalVar = window;
+  else if (typeof global !== 'undefined') globalVar = global;
+  else if (typeof self !== 'undefined') globalVar = self;
+  else globalVar = {};
+
+  var location = globalVar.location || {};
+  loc = loc || location;
+
+  var finaldestination = {}
+    , type = typeof loc
+    , key;
+
+  if ('blob:' === loc.protocol) {
+    finaldestination = new Url(unescape(loc.pathname), {});
+  } else if ('string' === type) {
+    finaldestination = new Url(loc, {});
+    for (key in ignore) delete finaldestination[key];
+  } else if ('object' === type) {
+    for (key in loc) {
+      if (key in ignore) continue;
+      finaldestination[key] = loc[key];
+    }
+
+    if (finaldestination.slashes === undefined) {
+      finaldestination.slashes = slashes.test(loc.href);
+    }
+  }
+
+  return finaldestination;
+}
+
+/**
+ * Check whether a protocol scheme is special.
+ *
+ * @param {String} The protocol scheme of the URL
+ * @return {Boolean} `true` if the protocol scheme is special, else `false`
+ * @private
+ */
+function isSpecial(scheme) {
+  return (
+    scheme === 'file:' ||
+    scheme === 'ftp:' ||
+    scheme === 'http:' ||
+    scheme === 'https:' ||
+    scheme === 'ws:' ||
+    scheme === 'wss:'
+  );
+}
+
+/**
+ * @typedef ProtocolExtract
+ * @type Object
+ * @property {String} protocol Protocol matched in the URL, in lowercase.
+ * @property {Boolean} slashes `true` if protocol is followed by "//", else `false`.
+ * @property {String} rest Rest of the URL that is not part of the protocol.
+ */
+
+/**
+ * Extract protocol information from a URL with/without double slash ("//").
+ *
+ * @param {String} address URL we want to extract from.
+ * @param {Object} location
+ * @return {ProtocolExtract} Extracted information.
+ * @private
+ */
+function extractProtocol(address, location) {
+  address = trimLeft(address);
+  address = address.replace(CRHTLF, '');
+  location = location || {};
+
+  var match = protocolre.exec(address);
+  var protocol = match[1] ? match[1].toLowerCase() : '';
+  var forwardSlashes = !!match[2];
+  var otherSlashes = !!match[3];
+  var slashesCount = 0;
+  var rest;
+
+  if (forwardSlashes) {
+    if (otherSlashes) {
+      rest = match[2] + match[3] + match[4];
+      slashesCount = match[2].length + match[3].length;
+    } else {
+      rest = match[2] + match[4];
+      slashesCount = match[2].length;
+    }
+  } else {
+    if (otherSlashes) {
+      rest = match[3] + match[4];
+      slashesCount = match[3].length;
+    } else {
+      rest = match[4]
+    }
+  }
+
+  if (protocol === 'file:') {
+    if (slashesCount >= 2) {
+      rest = rest.slice(2);
+    }
+  } else if (isSpecial(protocol)) {
+    rest = match[4];
+  } else if (protocol) {
+    if (forwardSlashes) {
+      rest = rest.slice(2);
+    }
+  } else if (slashesCount >= 2 && isSpecial(location.protocol)) {
+    rest = match[4];
+  }
+
+  return {
+    protocol: protocol,
+    slashes: forwardSlashes || isSpecial(protocol),
+    slashesCount: slashesCount,
+    rest: rest
+  };
+}
+
+/**
+ * Resolve a relative URL pathname against a base URL pathname.
+ *
+ * @param {String} relative Pathname of the relative URL.
+ * @param {String} base Pathname of the base URL.
+ * @return {String} Resolved pathname.
+ * @private
+ */
+function resolve(relative, base) {
+  if (relative === '') return base;
+
+  var path = (base || '/').split('/').slice(0, -1).concat(relative.split('/'))
+    , i = path.length
+    , last = path[i - 1]
+    , unshift = false
+    , up = 0;
+
+  while (i--) {
+    if (path[i] === '.') {
+      path.splice(i, 1);
+    } else if (path[i] === '..') {
+      path.splice(i, 1);
+      up++;
+    } else if (up) {
+      if (i === 0) unshift = true;
+      path.splice(i, 1);
+      up--;
+    }
+  }
+
+  if (unshift) path.unshift('');
+  if (last === '.' || last === '..') path.push('');
+
+  return path.join('/');
+}
+
+/**
+ * The actual URL instance. Instead of returning an object we've opted-in to
+ * create an actual constructor as it's much more memory efficient and
+ * faster and it pleases my OCD.
+ *
+ * It is worth noting that we should not use `URL` as class name to prevent
+ * clashes with the global URL instance that got introduced in browsers.
+ *
+ * @constructor
+ * @param {String} address URL we want to parse.
+ * @param {Object|String} [location] Location defaults for relative paths.
+ * @param {Boolean|Function} [parser] Parser for the query string.
+ * @private
+ */
+function Url(address, location, parser) {
+  address = trimLeft(address);
+  address = address.replace(CRHTLF, '');
+
+  if (!(this instanceof Url)) {
+    return new Url(address, location, parser);
+  }
+
+  var relative, extracted, parse, instruction, index, key
+    , instructions = rules.slice()
+    , type = typeof location
+    , url = this
+    , i = 0;
+
+  //
+  // The following if statements allows this module two have compatibility with
+  // 2 different API:
+  //
+  // 1. Node.js's `url.parse` api which accepts a URL, boolean as arguments
+  //    where the boolean indicates that the query string should also be parsed.
+  //
+  // 2. The `URL` interface of the browser which accepts a URL, object as
+  //    arguments. The supplied object will be used as default values / fall-back
+  //    for relative paths.
+  //
+  if ('object' !== type && 'string' !== type) {
+    parser = location;
+    location = null;
+  }
+
+  if (parser && 'function' !== typeof parser) parser = qs.parse;
+
+  location = lolcation(location);
+
+  //
+  // Extract protocol information before running the instructions.
+  //
+  extracted = extractProtocol(address || '', location);
+  relative = !extracted.protocol && !extracted.slashes;
+  url.slashes = extracted.slashes || relative && location.slashes;
+  url.protocol = extracted.protocol || location.protocol || '';
+  address = extracted.rest;
+
+  //
+  // When the authority component is absent the URL starts with a path
+  // component.
+  //
+  if (
+    extracted.protocol === 'file:' && (
+      extracted.slashesCount !== 2 || windowsDriveLetter.test(address)) ||
+    (!extracted.slashes &&
+      (extracted.protocol ||
+        extracted.slashesCount < 2 ||
+        !isSpecial(url.protocol)))
+  ) {
+    instructions[3] = [/(.*)/, 'pathname'];
+  }
+
+  for (; i < instructions.length; i++) {
+    instruction = instructions[i];
+
+    if (typeof instruction === 'function') {
+      address = instruction(address, url);
+      continue;
+    }
+
+    parse = instruction[0];
+    key = instruction[1];
+
+    if (parse !== parse) {
+      url[key] = address;
+    } else if ('string' === typeof parse) {
+      index = parse === '@'
+        ? address.lastIndexOf(parse)
+        : address.indexOf(parse);
+
+      if (~index) {
+        if ('number' === typeof instruction[2]) {
+          url[key] = address.slice(0, index);
+          address = address.slice(index + instruction[2]);
+        } else {
+          url[key] = address.slice(index);
+          address = address.slice(0, index);
+        }
+      }
+    } else if ((index = parse.exec(address))) {
+      url[key] = index[1];
+      address = address.slice(0, index.index);
+    }
+
+    url[key] = url[key] || (
+      relative && instruction[3] ? location[key] || '' : ''
+    );
+
+    //
+    // Hostname, host and protocol should be lowercased so they can be used to
+    // create a proper `origin`.
+    //
+    if (instruction[4]) url[key] = url[key].toLowerCase();
+  }
+
+  //
+  // Also parse the supplied query string in to an object. If we're supplied
+  // with a custom parser as function use that instead of the default build-in
+  // parser.
+  //
+  if (parser) url.query = parser(url.query);
+
+  //
+  // If the URL is relative, resolve the pathname against the base URL.
+  //
+  if (
+      relative
+    && location.slashes
+    && url.pathname.charAt(0) !== '/'
+    && (url.pathname !== '' || location.pathname !== '')
+  ) {
+    url.pathname = resolve(url.pathname, location.pathname);
+  }
+
+  //
+  // Default to a / for pathname if none exists. This normalizes the URL
+  // to always have a /
+  //
+  if (url.pathname.charAt(0) !== '/' && isSpecial(url.protocol)) {
+    url.pathname = '/' + url.pathname;
+  }
+
+  //
+  // We should not add port numbers if they are already the default port number
+  // for a given protocol. As the host also contains the port number we're going
+  // override it with the hostname which contains no port number.
+  //
+  if (!required(url.port, url.protocol)) {
+    url.host = url.hostname;
+    url.port = '';
+  }
+
+  //
+  // Parse down the `auth` for the username and password.
+  //
+  url.username = url.password = '';
+
+  if (url.auth) {
+    index = url.auth.indexOf(':');
+
+    if (~index) {
+      url.username = url.auth.slice(0, index);
+      url.username = encodeURIComponent(decodeURIComponent(url.username));
+
+      url.password = url.auth.slice(index + 1);
+      url.password = encodeURIComponent(decodeURIComponent(url.password))
+    } else {
+      url.username = encodeURIComponent(decodeURIComponent(url.auth));
+    }
+
+    url.auth = url.password ? url.username +':'+ url.password : url.username;
+  }
+
+  url.origin = url.protocol !== 'file:' && isSpecial(url.protocol) && url.host
+    ? url.protocol +'//'+ url.host
+    : 'null';
+
+  //
+  // The href is just the compiled result.
+  //
+  url.href = url.toString();
+}
+
+/**
+ * This is convenience method for changing properties in the URL instance to
+ * insure that they all propagate correctly.
+ *
+ * @param {String} part          Property we need to adjust.
+ * @param {Mixed} value          The newly assigned value.
+ * @param {Boolean|Function} fn  When setting the query, it will be the function
+ *                               used to parse the query.
+ *                               When setting the protocol, double slash will be
+ *                               removed from the final url if it is true.
+ * @returns {URL} URL instance for chaining.
+ * @public
+ */
+function set(part, value, fn) {
+  var url = this;
+
+  switch (part) {
+    case 'query':
+      if ('string' === typeof value && value.length) {
+        value = (fn || qs.parse)(value);
+      }
+
+      url[part] = value;
+      break;
+
+    case 'port':
+      url[part] = value;
+
+      if (!required(value, url.protocol)) {
+        url.host = url.hostname;
+        url[part] = '';
+      } else if (value) {
+        url.host = url.hostname +':'+ value;
+      }
+
+      break;
+
+    case 'hostname':
+      url[part] = value;
+
+      if (url.port) value += ':'+ url.port;
+      url.host = value;
+      break;
+
+    case 'host':
+      url[part] = value;
+
+      if (port.test(value)) {
+        value = value.split(':');
+        url.port = value.pop();
+        url.hostname = value.join(':');
+      } else {
+        url.hostname = value;
+        url.port = '';
+      }
+
+      break;
+
+    case 'protocol':
+      url.protocol = value.toLowerCase();
+      url.slashes = !fn;
+      break;
+
+    case 'pathname':
+    case 'hash':
+      if (value) {
+        var char = part === 'pathname' ? '/' : '#';
+        url[part] = value.charAt(0) !== char ? char + value : value;
+      } else {
+        url[part] = value;
+      }
+      break;
+
+    case 'username':
+    case 'password':
+      url[part] = encodeURIComponent(value);
+      break;
+
+    case 'auth':
+      var index = value.indexOf(':');
+
+      if (~index) {
+        url.username = value.slice(0, index);
+        url.username = encodeURIComponent(decodeURIComponent(url.username));
+
+        url.password = value.slice(index + 1);
+        url.password = encodeURIComponent(decodeURIComponent(url.password));
+      } else {
+        url.username = encodeURIComponent(decodeURIComponent(value));
+      }
+  }
+
+  for (var i = 0; i < rules.length; i++) {
+    var ins = rules[i];
+
+    if (ins[4]) url[ins[1]] = url[ins[1]].toLowerCase();
+  }
+
+  url.auth = url.password ? url.username +':'+ url.password : url.username;
+
+  url.origin = url.protocol !== 'file:' && isSpecial(url.protocol) && url.host
+    ? url.protocol +'//'+ url.host
+    : 'null';
+
+  url.href = url.toString();
+
+  return url;
+}
+
+/**
+ * Transform the properties back in to a valid and full URL string.
+ *
+ * @param {Function} stringify Optional query stringify function.
+ * @returns {String} Compiled version of the URL.
+ * @public
+ */
+function toString(stringify) {
+  if (!stringify || 'function' !== typeof stringify) stringify = qs.stringify;
+
+  var query
+    , url = this
+    , host = url.host
+    , protocol = url.protocol;
+
+  if (protocol && protocol.charAt(protocol.length - 1) !== ':') protocol += ':';
+
+  var result =
+    protocol +
+    ((url.protocol && url.slashes) || isSpecial(url.protocol) ? '//' : '');
+
+  if (url.username) {
+    result += url.username;
+    if (url.password) result += ':'+ url.password;
+    result += '@';
+  } else if (url.password) {
+    result += ':'+ url.password;
+    result += '@';
+  } else if (
+    url.protocol !== 'file:' &&
+    isSpecial(url.protocol) &&
+    !host &&
+    url.pathname !== '/'
+  ) {
+    //
+    // Add back the empty userinfo, otherwise the original invalid URL
+    // might be transformed into a valid one with `url.pathname` as host.
+    //
+    result += '@';
+  }
+
+  //
+  // Trailing colon is removed from `url.host` when it is parsed. If it still
+  // ends with a colon, then add back the trailing colon that was removed. This
+  // prevents an invalid URL from being transformed into a valid one.
+  //
+  if (host[host.length - 1] === ':' || (port.test(url.hostname) && !url.port)) {
+    host += ':';
+  }
+
+  result += host + url.pathname;
+
+  query = 'object' === typeof url.query ? stringify(url.query) : url.query;
+  if (query) result += '?' !== query.charAt(0) ? '?'+ query : query;
+
+  if (url.hash) result += url.hash;
+
+  return result;
+}
+
+Url.prototype = { set: set, toString: toString };
+
+//
+// Expose the URL parser and some additional properties that might be useful for
+// others or testing.
+//
+Url.extractProtocol = extractProtocol;
+Url.location = lolcation;
+Url.trimLeft = trimLeft;
+Url.qs = qs;
+
+module.exports = Url;
 
 
 /***/ }),
