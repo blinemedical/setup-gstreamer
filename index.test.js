@@ -21,8 +21,8 @@ test('test runs', () => {
       console.log(result);
     }
     catch (err) {
-      console.error("output", err);
-      console.error("stderr", err.stderr.toString());
+      console.log("output", err);
+      console.log("stderr", err.stderr.toString());
       throw(err);
     }
   }
