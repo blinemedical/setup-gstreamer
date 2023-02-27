@@ -111,8 +111,14 @@ async function run() {
 
         core.info(`Downloading: ${url}`);
         const installerPath = await tc.downloadTool(url, installer);
-        await exec.exec('msiexec', ['/package', installerPath, '/quiet', 'ADDLOCAL=ALL']);
-        await io.rmRF(installerPath);
+
+        if (installerPath) {
+          await exec.exec('msiexec', ['/package', installerPath, '/quiet', 'ADDLOCAL=ALL']);
+          await io.rmRF(installerPath);
+        }
+        else {
+          core.setFailed(`Failed to download ${url}`);
+        }
       }
 
       gstreamerPath = `c:\\gstreamer\\1.0\\msvc_${arch}`;
@@ -141,8 +147,14 @@ async function run() {
 
         core.info(`Downloading: ${url}`);
         const installerPath = await tc.downloadTool(url, installer);
-        await exec.exec('sudo', ['installer', '-verbose', '-pkg', installerPath, '-target', '/']);
-        await io.rmRF(installerPath);
+
+        if (installerPath) {
+          await exec.exec('sudo', ['installer', '-verbose', '-pkg', installerPath, '-target', '/']);
+          await io.rmRF(installerPath);
+        }
+        else {
+          core.setFailed(`Failed to download ${url}`);
+        }
       }
 
       gstreamerPath = '/Library/Frameworks/GStreamer.framework';
