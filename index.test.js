@@ -16,7 +16,14 @@ test('test runs', () => {
     console.log(`skipping test on ${process.platform}`);
   }
   else {
-    let result = cp.execSync(`node ${ip}`, {env: process.env}).toString();
-    console.log(result);
+    try {
+      let result = cp.execSync(`node ${ip}`, {env: process.env}).toString();
+      console.log(result);
+    }
+    catch (err) {
+      console.error("output", err);
+      console.error("stderr", err.stderr.toString());
+      throw(err);
+    }
   }
 });
