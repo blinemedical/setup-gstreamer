@@ -4,7 +4,7 @@ const path = require('path');
 
 // shows how the runner will run a javascript action with env / stdout protocol
 test('test runs', () => {
-  process.env['INPUT_VERSION'] = '1.19.90';
+  process.env['INPUT_VERSION'] = '1.22.0';
   process.env['INPUT_ARCH'] = 'x86_64';
   const ip = path.join(__dirname, 'index.js');
   if (process.platform ===  'linux') {
@@ -16,7 +16,14 @@ test('test runs', () => {
     console.log(`skipping test on ${process.platform}`);
   }
   else {
-    let result = cp.execSync(`node ${ip}`, {env: process.env}).toString();
-    console.log(result);
+    try {
+      let result = cp.execSync(`node ${ip}`, {env: process.env}).toString();
+      console.log(result);
+    }
+    catch (err) {
+      console.log("output", err);
+      console.log("stderr", err.stderr.toString());
+      throw(err);
+    }
   }
 });
