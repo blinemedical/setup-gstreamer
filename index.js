@@ -196,7 +196,7 @@ async function run() {
             const prefix = '/usr';
             const opt = { cwd: `${process.cwd()}/${gstsrc}` };
             const key = `${github.context.repo.owner}-${github.context.repo.repo}-${gitUrl}-${version}-${arch}-${distro.name}-${distro.versionId}-${mesonVersion}-${keyVersion}`;
-            const cacheKey = await cache.restoreCache([gstsrc], key);
+            const cacheKey = await cache.restoreCache([gstsrc], key, [key]);
 
             if (!cacheKey) {
               core.info(`Pre-built not found in cache; creating a new one. (key: "${key}")`);
