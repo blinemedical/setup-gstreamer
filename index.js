@@ -1,3 +1,4 @@
+const path = require('path');
 const core = require('@actions/core');
 const exec = require('@actions/exec');
 const cache = require('@actions/cache');
@@ -5,37 +6,7 @@ const github = require('@actions/github');
 const tc = require('@actions/tool-cache');
 const io = require('@actions/io');
 const semver = require('semver');
-
-async function parseEtcRelease() {
-  let osName = null;
-  let osVersion = null;
-
-  const options = {
-    listeners: {
-      stdline: (line) => {
-        // Split on = if only one present
-        const count = line.match(/=/g);
-
-        if (count && count.length == 1) {
-          const kvp = line.split('=');
-
-          if (kvp[0] === 'VERSION_ID' && !osVersion) {
-            osVersion = kvp[1].replace(/"/g, '').toString();
-          }
-
-          if (kvp[0] === 'NAME' && !osName) {
-            osName = kvp[1].replace(/"/g, '').toString();
-          }
-        }
-      },
-    },
-  };
-  await exec.exec('bash', ['-c', 'cat /etc/*-release'], options);
-  return {
-    name: osName,
-    versionId: osVersion,
-  };
-}
+const { parseEtcRelease, isSelfHosted } = require('./utils');
 
 function LinuxDistroConfig(versionIds, envMap, commands) {
   return {
@@ -102,6 +73,8 @@ async function run() {
         core.setFailed('"arch" may only be x86 or x86_64');
       }
 
+      const installDir = path.join(isSelfHosted() ? 'C:' : 'D:', 'gstreamer');
+
       const installers = [
         `gstreamer-1.0-msvc-${arch}-${version}.msi`,
         `gstreamer-1.0-devel-msvc-${arch}-${version}.msi`,
@@ -114,16 +87,22 @@ async function run() {
         const installerPath = await tc.downloadTool(url, installer);
 
         if (installerPath) {
-          await exec.exec('msiexec', ['/package', installerPath, '/quiet', 'ADDLOCAL=ALL']);
+          await exec.exec('msiexec', [
+            '/passive',
+            `INSTALLDIR=${installDir}`,
+            'ADDLOCAL=ALL',
+            '/i',
+            installerPath,
+          ]);
           await io.rmRF(installerPath);
         } else {
           core.setFailed(`Failed to download ${url}`);
         }
       }
 
-      gstreamerPath = `c:\\gstreamer\\1.0\\msvc_${arch}`;
-      gstreamerBinPath = `${gstreamerPath}\\bin`;
-      gstreamerPkgConfigPath = `${gstreamerPath}\\lib\\pkgconfig`;
+      gstreamerPath = path.join(installDir, '1.0', `msvc_${arch}`);
+      gstreamerBinPath = path.join(gstreamerPath, 'bin');
+      gstreamerPkgConfigPath = path.join(gstreamerPath, 'lib', 'pkgconfig');
 
       // Set the GSTREAMER_1_0_ROOT_MSVC_<arch> variable
       let gst_root_varname = 'GSTREAMER_1_0_ROOT_MSVC_' + arch.toUpperCase();
