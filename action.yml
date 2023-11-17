@@ -8,7 +8,7 @@ inputs:
   version:
     description: 'version number'
     required:    false
-    default:     '1.22.0'
+    default:     '1.22.7'
   arch:
     description: 'architecture (x86, x86_64)'
     required:    false

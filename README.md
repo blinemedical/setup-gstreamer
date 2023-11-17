@@ -12,7 +12,7 @@ Tested runner environments are macOS, Windows, and Ubuntu 20.04.
 
 ### `version`
 
-The version of GStreamer to install.  The default is `1.22.0`
+The version of GStreamer to install.  The default is `1.22.7`
 
 ### `arch`
 
