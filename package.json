@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Setup GStreamer - GitHub Action",
   "main": "index.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "lint": "eslint .",
     "prepare": "ncc build index.js -o dist --source-map --license licenses.txt",
