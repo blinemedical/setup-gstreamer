@@ -56,4 +56,3 @@ See the `.github/workflows/test.yml` for other examples.
 **References:**
  * [Custom Actions](https://docs.github.com/en/actions/creating-actions/about-custom-actions)
  * [Action Toolkit](https://github.com/actions/toolkit)
- 
