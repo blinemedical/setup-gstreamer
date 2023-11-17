@@ -73,7 +73,8 @@ async function run() {
         core.setFailed('"arch" may only be x86 or x86_64');
       }
 
-      const installDir = path.join(isSelfHosted() ? 'C:' : 'D:', 'gstreamer');
+      const installDir =
+        process.env.GSTREAMER_INSTALL_DIR ?? path.join(isSelfHosted() ? 'C:' : 'D:', 'gstreamer');
 
       const installers = [
         `gstreamer-1.0-msvc-${arch}-${version}.msi`,
