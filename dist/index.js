@@ -89073,6 +89073,50 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 1252:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+const exec = __nccwpck_require__(1514);
+
+exports.parseEtcRelease = async () => {
+  let osName = null;
+  let osVersion = null;
+
+  const options = {
+    listeners: {
+      stdline: (line) => {
+        // Split on = if only one present
+        const count = line.match(/=/g);
+
+        if (count && count.length == 1) {
+          const kvp = line.split('=');
+
+          if (kvp[0] === 'VERSION_ID' && !osVersion) {
+            osVersion = kvp[1].replace(/"/g, '').toString();
+          }
+
+          if (kvp[0] === 'NAME' && !osName) {
+            osName = kvp[1].replace(/"/g, '').toString();
+          }
+        }
+      },
+    },
+  };
+  await exec.exec('bash', ['-c', 'cat /etc/*-release'], options);
+  return {
+    name: osName,
+    versionId: osVersion,
+  };
+};
+
+exports.isSelfHosted = () =>
+  process.env['AGENT_ISSELFHOSTED'] === '1' ||
+  (process.env['AGENT_ISSELFHOSTED'] === undefined &&
+    process.env['RUNNER_ENVIRONMENT'] !== 'github-hosted');
+
+
+/***/ }),
+
 /***/ 2877:
 /***/ ((module) => {
 
@@ -91005,6 +91049,7 @@ module.exports = JSON.parse('[[[0,44],"disallowed_STD3_valid"],[[45,46],"valid"]
 var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
+const path = __nccwpck_require__(1017);
 const core = __nccwpck_require__(2186);
 const exec = __nccwpck_require__(1514);
 const cache = __nccwpck_require__(7799);
@@ -91012,57 +91057,29 @@ const github = __nccwpck_require__(5438);
 const tc = __nccwpck_require__(7784);
 const io = __nccwpck_require__(7436);
 const semver = __nccwpck_require__(1383);
-
-async function parseEtcRelease () {
-  let osName = null;
-  let osVersion = null;
-
-  const options = {
-    listeners: {
-      stdline: (line) => {
-        // Split on = if only one present
-        const count = line.match(/=/g);
-
-        if (count && count.length == 1) {
-          const kvp = line.split('=');
-
-          if (kvp[0] === 'VERSION_ID' && !osVersion) {
-            osVersion = kvp[1].replace(/"/g, '').toString();
-          }
-
-          if (kvp[0] === 'NAME' && !osName) {
-            osName = kvp[1].replace(/"/g, '').toString();
-          }
-        }
-      }
-    }
-  };
-  await exec.exec('bash', ['-c', 'cat /etc/*-release'], options);
-  return {
-    name: osName,
-    versionId: osVersion
-  };
-}
+const { parseEtcRelease, isSelfHosted } = __nccwpck_require__(1252);
 
 function LinuxDistroConfig(versionIds, envMap, commands) {
   return {
     versionIds: versionIds,
-    env:        envMap,
-    commands:   commands
+    env: envMap,
+    commands: commands,
   };
 }
 
 function LinuxDistroCommand(command, args) {
-  return { cmd: command, args: args};
+  return { cmd: command, args: args };
 }
 
 // Github action runners (shared) currently run in passwordless sudo mode.
 const DistroVersionPackageMap = {
-  'Ubuntu' : LinuxDistroConfig(['20.04', '22.04'], {}, [
-    LinuxDistroCommand('sudo', ['DEBIAN_FRONTEND=noninteractive', 
-      'apt', 'update']),
-    LinuxDistroCommand('sudo', ['DEBIAN_FRONTEND=noninteractive',
-      'apt', 'install', '-y',
+  Ubuntu: LinuxDistroConfig(['20.04', '22.04'], {}, [
+    LinuxDistroCommand('sudo', ['DEBIAN_FRONTEND=noninteractive', 'apt', 'update']),
+    LinuxDistroCommand('sudo', [
+      'DEBIAN_FRONTEND=noninteractive',
+      'apt',
+      'install',
+      '-y',
       'build-essential',
       'libglib2.0-dev',
       'libgudev-1.0-dev',
@@ -91081,38 +91098,40 @@ const DistroVersionPackageMap = {
       'git',
       'python3-pip',
       'flex',
-      'bison'
+      'bison',
     ]),
-    LinuxDistroCommand('sudo', [
-      'pip3', 'install', 'meson', 'ninja'
-    ])
-  ]) // end of linuxdistroconfig
+    LinuxDistroCommand('sudo', ['pip3', 'install', 'meson', 'ninja']),
+  ]), // end of linuxdistroconfig
 };
 
 async function run() {
   try {
-    const baseUrl = "https://gstreamer.freedesktop.org/data/pkg";
+    const baseUrl = 'https://gstreamer.freedesktop.org/data/pkg';
     const version = core.getInput('version');
     const arch = core.getInput('arch');
     const gitUrl = core.getInput('repoUrl');
     let gstreamerPath = '';
     let gstreamerBinPath = '';
+    let gstreamerPkgConfigPath = '';
 
     core.info(`Preparing to install GStreamer version ${version} on ${process.platform}...`);
 
     // debug is only output if you set the secret `ACTIONS_RUNNER_DEBUG` to true
-    core.debug((new Date()).toTimeString());
+    core.debug(new Date().toTimeString());
 
     if (process.platform === 'win32') {
       if (arch != 'x86' && arch != 'x86_64') {
         core.setFailed('"arch" may only be x86 or x86_64');
       }
 
+      const installDir =
+        process.env.GSTREAMER_INSTALL_DIR ?? path.join(isSelfHosted() ? 'C:' : 'D:', 'gstreamer');
+
       const installers = [
         `gstreamer-1.0-msvc-${arch}-${version}.msi`,
-        `gstreamer-1.0-devel-msvc-${arch}-${version}.msi`
+        `gstreamer-1.0-devel-msvc-${arch}-${version}.msi`,
       ];
-      
+
       for (const installer of installers) {
         const url = `${baseUrl}/windows/${version}/msvc/${installer}`;
 
@@ -91120,23 +91139,28 @@ async function run() {
         const installerPath = await tc.downloadTool(url, installer);
 
         if (installerPath) {
-          await exec.exec('msiexec', ['/package', installerPath, '/quiet', 'ADDLOCAL=ALL']);
+          await exec.exec('msiexec', [
+            '/passive',
+            `INSTALLDIR=${installDir}`,
+            'ADDLOCAL=ALL',
+            '/i',
+            installerPath,
+          ]);
           await io.rmRF(installerPath);
-        }
-        else {
+        } else {
           core.setFailed(`Failed to download ${url}`);
         }
       }
 
-      gstreamerPath = `c:\\gstreamer\\1.0\\msvc_${arch}`;
-      gstreamerBinPath = `${gstreamerPath}\\bin`;
+      gstreamerPath = path.join(installDir, '1.0', `msvc_${arch}`);
+      gstreamerBinPath = path.join(gstreamerPath, 'bin');
+      gstreamerPkgConfigPath = path.join(gstreamerPath, 'lib', 'pkgconfig');
 
       // Set the GSTREAMER_1_0_ROOT_MSVC_<arch> variable
       let gst_root_varname = 'GSTREAMER_1_0_ROOT_MSVC_' + arch.toUpperCase();
-      core.info(`Setting environment variable: ${gst_root_varname}`);
+      core.info(`Setting ${gst_root_varname} to ${gstreamerPath}`);
       core.exportVariable(gst_root_varname, gstreamerPath);
-    }
-    else if (process.platform === 'darwin') {
+    } else if (process.platform === 'darwin') {
       if (arch == 'x86') {
         core.setFailed(`GStreamer binaries for ${process.platform} and x86 are not available`);
       }
@@ -91146,7 +91170,7 @@ async function run() {
       }
       const installers = [
         `gstreamer-1.0-${version}-${pkgType}.pkg`,
-        `gstreamer-1.0-devel-${version}-${pkgType}.pkg`
+        `gstreamer-1.0-devel-${version}-${pkgType}.pkg`,
       ];
 
       for (const installer of installers) {
@@ -91158,16 +91182,15 @@ async function run() {
         if (installerPath) {
           await exec.exec('sudo', ['installer', '-verbose', '-pkg', installerPath, '-target', '/']);
           await io.rmRF(installerPath);
-        }
-        else {
+        } else {
           core.setFailed(`Failed to download ${url}`);
         }
       }
 
       gstreamerPath = '/Library/Frameworks/GStreamer.framework';
       gstreamerBinPath = `${gstreamerPath}/Commands`;
-    }
-    else if (process.platform === 'linux') {
+      gstreamerPkgConfigPath = `${gstreamerPath}/lib/pkgconfig`;
+    } else if (process.platform === 'linux') {
       // Determine what flavor of linux is running using exec.  Branch from
       // there to install the necessary package and tool dependencies for
       // developing with gstreamer on that flavor of linux.
@@ -91184,14 +91207,16 @@ async function run() {
 
             // Do package installation for the distro config.
             for (const command of config.commands) {
-              await exec.exec(command.cmd, command.args, {env: config.env});
+              await exec.exec(command.cmd, command.args, { env: config.env });
             }
 
             let mesonVersion;
             await exec.exec('meson', ['--version'], {
               listeners: {
-                stdline: (line) => { mesonVersion = `meson-${line}`; }
-              }
+                stdline: (line) => {
+                  mesonVersion = `meson-${line}`;
+                },
+              },
             });
 
             // Come up with a unique key and attempt to fetch the cache under
@@ -91209,30 +91234,40 @@ async function run() {
               core.info(`Pre-built not found in cache; creating a new one. (key: "${key}")`);
 
               // Clone the source tree, configure, compile, and save cache.
-              await exec.exec('git', ['config',
-                '--global', 'http.postBuffer', '524288000']);
-              await exec.exec('git', ['clone',
-                '--progress', '--verbose',
-                '--depth', '1',
-                '--branch', version, gitUrl, gstsrc]);
+              await exec.exec('git', ['config', '--global', 'http.postBuffer', '524288000']);
+              await exec.exec('git', [
+                'clone',
+                '--progress',
+                '--verbose',
+                '--depth',
+                '1',
+                '--branch',
+                version,
+                gitUrl,
+                gstsrc,
+              ]);
 
-              await exec.exec('meson', [
-                `--prefix=${prefix}`,
-                '-Dges=disabled',
-                '-Dtests=disabled',
-                '-Dexamples=disabled',
-                '-Dgst-examples=disabled',
-                '-Ddoc=disabled',
-                '-Dgtk_doc=disabled',
-                '-Dgpl=enabled',
-                'builddir'], opt);
+              await exec.exec(
+                'meson',
+                [
+                  `--prefix=${prefix}`,
+                  '-Dges=disabled',
+                  '-Dtests=disabled',
+                  '-Dexamples=disabled',
+                  '-Dgst-examples=disabled',
+                  '-Ddoc=disabled',
+                  '-Dgtk_doc=disabled',
+                  '-Dgpl=enabled',
+                  'builddir',
+                ],
+                opt
+              );
               await exec.exec('meson', ['compile', '-C', 'builddir'], opt);
 
               await cache.saveCache([gstsrc], key);
 
               core.info(`New cache created for this key: "${key}"`);
-            }
-            else {
+            } else {
               core.info(`Found pre-built cache; using it. (key: "${key}")`);
             }
 
@@ -91242,29 +91277,38 @@ async function run() {
 
             gstreamerPath = `${prefix}/lib/${arch}-linux-gnu/gstreamer-1.0`;
             gstreamerBinPath = `${prefix}/bin`;
+            gstreamerPkgConfigPath = `${prefix}/lib/${arch}-linux-gnu/pkgconfig`;
+          } else {
+            core.setFailed(
+              `could not find a distro configuration matching ${distro.name}, ${distro.versionId}`
+            );
           }
-          else {
-            core.setFailed(`could not find a distro configuration matching ${distro.name}, ${distro.versionId}`);
-          }
-        }
-        else {
+        } else {
           core.setFailed(`unknown distro name "${distro.name}" in available configurations`);
         }
-      }
-      else {
+      } else {
         core.setFailed(`could not infer distro from /etc/*-release`);
       }
-    }
-    else {
+    } else {
       // Pitch a fit / it's unsupported right now.
       core.setFailed(`${process.platform} is unsupported by this action at this time.`);
     }
 
-    core.info((new Date()).toTimeString());
+    core.debug(new Date().toTimeString());
 
     // Configure the output(s), add 'bin' to the PATH (via GITHUB_PATH)
     core.setOutput('gstreamerPath', gstreamerPath);
+    core.info(`Adding ${gstreamerBinPath} to PATH`);
     core.addPath(gstreamerBinPath);
+
+    core.info(`Adding ${gstreamerPkgConfigPath} to PKG_CONFIG_PATH`);
+    let PKG_CONFIG_PATH = process.env.PKG_CONFIG_PATH;
+    if (PKG_CONFIG_PATH) {
+      PKG_CONFIG_PATH = `${PKG_CONFIG_PATH}:${gstreamerPkgConfigPath}`;
+    } else {
+      PKG_CONFIG_PATH = gstreamerPkgConfigPath;
+    }
+    core.exportVariable('PKG_CONFIG_PATH', PKG_CONFIG_PATH);
   } catch (error) {
     core.setFailed(error.message);
   }
