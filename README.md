@@ -12,7 +12,7 @@ Tested runner environments are macOS, Windows, and Ubuntu 20.04.
 
 ### `version`
 
-The version of GStreamer to install.  The default is `1.22.0`
+The version of GStreamer to install.  The default is `1.22.7`
 
 ### `arch`
 
@@ -56,4 +56,3 @@ See the `.github/workflows/test.yml` for other examples.
 **References:**
  * [Custom Actions](https://docs.github.com/en/actions/creating-actions/about-custom-actions)
  * [Action Toolkit](https://github.com/actions/toolkit)
- 
