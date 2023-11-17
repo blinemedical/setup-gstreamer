@@ -107,7 +107,7 @@ async function run() {
 
       // Set the GSTREAMER_1_0_ROOT_MSVC_<arch> variable
       let gst_root_varname = 'GSTREAMER_1_0_ROOT_MSVC_' + arch.toUpperCase();
-      core.info(`Setting environment variable: ${gst_root_varname}`);
+      core.info(`Setting ${gst_root_varname} to ${gstreamerPath}`);
       core.exportVariable(gst_root_varname, gstreamerPath);
     } else if (process.platform === 'darwin') {
       if (arch == 'x86') {
@@ -243,10 +243,11 @@ async function run() {
       core.setFailed(`${process.platform} is unsupported by this action at this time.`);
     }
 
-    core.info(new Date().toTimeString());
+    core.debug(new Date().toTimeString());
 
     // Configure the output(s), add 'bin' to the PATH (via GITHUB_PATH)
     core.setOutput('gstreamerPath', gstreamerPath);
+    core.info(`Adding ${gstreamerBinPath} to PATH`);
     core.addPath(gstreamerBinPath);
 
     core.info(`Adding ${gstreamerPkgConfigPath} to PKG_CONFIG_PATH`);
