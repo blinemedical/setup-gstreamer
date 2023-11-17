@@ -90,6 +90,7 @@ async function run() {
     const gitUrl = core.getInput('repoUrl');
     let gstreamerPath = '';
     let gstreamerBinPath = '';
+    let gstreamerPkgConfigPath = '';
 
     core.info(`Preparing to install GStreamer version ${version} on ${process.platform}...`);
 
@@ -122,6 +123,7 @@ async function run() {
 
       gstreamerPath = `c:\\gstreamer\\1.0\\msvc_${arch}`;
       gstreamerBinPath = `${gstreamerPath}\\bin`;
+      gstreamerPkgConfigPath = `${gstreamerPath}\\lib\\pkgconfig`;
 
       // Set the GSTREAMER_1_0_ROOT_MSVC_<arch> variable
       let gst_root_varname = 'GSTREAMER_1_0_ROOT_MSVC_' + arch.toUpperCase();
@@ -156,6 +158,7 @@ async function run() {
 
       gstreamerPath = '/Library/Frameworks/GStreamer.framework';
       gstreamerBinPath = `${gstreamerPath}/Commands`;
+      gstreamerPkgConfigPath = `${gstreamerPath}/lib/pkgconfig`;
     } else if (process.platform === 'linux') {
       // Determine what flavor of linux is running using exec.  Branch from
       // there to install the necessary package and tool dependencies for
@@ -243,6 +246,7 @@ async function run() {
 
             gstreamerPath = `${prefix}/lib/${arch}-linux-gnu/gstreamer-1.0`;
             gstreamerBinPath = `${prefix}/bin`;
+            gstreamerPkgConfigPath = `${prefix}/lib/${arch}-linux-gnu/pkgconfig`;
           } else {
             core.setFailed(
               `could not find a distro configuration matching ${distro.name}, ${distro.versionId}`
@@ -264,6 +268,15 @@ async function run() {
     // Configure the output(s), add 'bin' to the PATH (via GITHUB_PATH)
     core.setOutput('gstreamerPath', gstreamerPath);
     core.addPath(gstreamerBinPath);
+
+    core.info(`Adding ${gstreamerPkgConfigPath} to PKG_CONFIG_PATH`);
+    let PKG_CONFIG_PATH = process.env.PKG_CONFIG_PATH;
+    if (PKG_CONFIG_PATH) {
+      PKG_CONFIG_PATH = `${PKG_CONFIG_PATH}:${gstreamerPkgConfigPath}`;
+    } else {
+      PKG_CONFIG_PATH = gstreamerPkgConfigPath;
+    }
+    core.exportVariable('PKG_CONFIG_PATH', PKG_CONFIG_PATH);
   } catch (error) {
     core.setFailed(error.message);
   }
