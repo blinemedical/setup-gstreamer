@@ -33,6 +33,16 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Install Python for Windows
+      if: matrix.os == 'windows-2019' || matrix.os == 'windows-2022'
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Install Meson and Ninja Dependencies for Windows
+      if: matrix.os == 'windows-2019' || matrix.os == 'windows-2022'
+      run: pip install meson ninja
+
     - name: Setup GStreamer with default version
       uses: ./
       with:
