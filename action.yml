@@ -35,7 +35,6 @@ inputs:
               '-Dsharp=disabled',
               '-Dgpl=enabled',
               '-Dpython=disabled',
-              '-Dlibav=disabled',
               '-Dvaapi=disabled',
               '-Dgst-plugins-base:pango=enabled',
               '-Dgst-plugins-good:cairo=enabled',
