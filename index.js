@@ -74,34 +74,44 @@ async function run() {
       }
 
       const installDir =
-        process.env.GSTREAMER_INSTALL_DIR ?? path.join(isSelfHosted() ? 'C:' : 'D:', 'gstreamer');
+        process.env.GSTREAMER_INSTALL_DIR ?? path.join(isSelfHosted() ? 'C:' : 'D:', `gstreamer\\1.0\\msvc_${arch}`);
 
-      const installers = [
-        `gstreamer-1.0-msvc-${arch}-${version}.msi`,
-        `gstreamer-1.0-devel-msvc-${arch}-${version}.msi`,
-      ];
+      const sourceDir =
+        process.env.GSTREAMER_INSTALL_DIR ?? path.join(isSelfHosted() ? 'C:' : 'D:', 'gstreamer_source');
 
-      for (const installer of installers) {
-        const url = `${baseUrl}/windows/${version}/msvc/${installer}`;
+      core.info("Cloning gstreamer's git repository...");
+      await exec.exec('git', ['config', '--global', 'http.postBuffer', '524288000']);
+      await exec.exec('git', [
+        'clone',
+        '--progress',
+        '--verbose',
+        '--depth',
+        '1',
+        '--branch',
+        version,
+        gitUrl,
+        sourceDir,
+      ]);
 
-        core.info(`Downloading: ${url}`);
-        const installerPath = await tc.downloadTool(url, installer);
+      const opt = { cwd: `${process.cwd()}/${sourceDir}` };
 
-        if (installerPath) {
-          await exec.exec('msiexec', [
-            '/passive',
-            `INSTALLDIR=${installDir}`,
-            'ADDLOCAL=ALL',
-            '/i',
-            installerPath,
-          ]);
-          await io.rmRF(installerPath);
-        } else {
-          core.setFailed(`Failed to download ${url}`);
-        }
-      }
+      await exec.exec(
+        'meson',
+        [
+          'setup',
+          'builddir',
+          '--vsenv',
+          `--prefix=${installDir}`,
+          '--buildtype=debugoptimized'
+        ].concat(core.getInput('gstreamerOptions')),
+        opt
+      );
+      await exec.exec('meson', ['compile', '-C', 'builddir'], opt);
 
-      gstreamerPath = path.join(installDir, '1.0', `msvc_${arch}`);
+      core.info(`Installing gstreamer ${version} to ${installDir}`);
+      await exec.exec('meson', ['install', '-C', 'builddir'], opt);
+
+      gstreamerPath = installDir;
       gstreamerBinPath = path.join(gstreamerPath, 'bin');
       gstreamerPkgConfigPath = path.join(gstreamerPath, 'lib', 'pkgconfig');
 
