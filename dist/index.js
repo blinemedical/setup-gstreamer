@@ -92411,7 +92411,8 @@ async function run() {
         sourceDir,
       ]);
 
-      const opt = { cwd: `${process.cwd()}/${sourceDir}` };
+      const sourceTarget = { cwd: `${process.cwd()}/${sourceDir}` };
+      const buildArguments = core.getInput('gstreamerOptions').split(',');
 
       await exec.exec(
         'meson',
@@ -92421,13 +92422,13 @@ async function run() {
           '--vsenv',
           `--prefix=${installDir}`,
           '--buildtype=debugoptimized'
-        ].concat(core.getInput('gstreamerOptions')),
-        opt
+        ].concat(buildArguments),
+        sourceTarget
       );
-      await exec.exec('meson', ['compile', '-C', 'builddir'], opt);
+      await exec.exec('meson', ['compile', '-C', 'builddir'], sourceTarget);
 
       core.info(`Installing gstreamer ${version} to ${installDir}`);
-      await exec.exec('meson', ['install', '-C', 'builddir'], opt);
+      await exec.exec('meson', ['install', '-C', 'builddir'], sourceTarget);
 
       gstreamerPath = installDir;
       gstreamerBinPath = path.join(gstreamerPath, 'bin');
