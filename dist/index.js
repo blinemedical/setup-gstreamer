@@ -92411,7 +92411,7 @@ async function run() {
         sourceDir,
       ]);
 
-      const sourceTarget = { cwd: `${process.cwd()}/${sourceDir}` };
+      const sourceTarget = { cwd: `${sourceDir}` };
       const buildArguments = core.getInput('gstreamerOptions').split(',');
 
       await exec.exec(
