@@ -6,6 +6,7 @@ const path = require('path');
 test('test runs', () => {
   process.env['INPUT_VERSION'] = '1.22.7';
   process.env['INPUT_ARCH'] = 'x86_64';
+  process.env['INPUT_GSTREAMEROPTIONS'] = '--disable-gtk-doc --disable-examples --disable-tests --disable-benchmarks --disable-debug --disable-debugutils --disable-gtk-doc-html --disable-gtk-doc-pdf --disable-introspection --disable-valgrind --disable-examples --disable-tests --disable-benchmarks --disable-debug --disable-debugutils --disable-gtk-doc-html --disable-gtk-doc-pdf --disable-introspection --disable-valgrind --disable-examples --disable-tests --disable-benchmarks --disable-debug --disable-debugutils --disable-gtk-doc-html --disable-gtk-doc-pdf --disable-introspection --disable-valgrind --disable-examples --disable-tests --disable-benchmarks --disable-debug --disable-debugutils --disable-gtk-doc-html --disable-gtk-doc-pdf --disable-introspection --disable-valgrind --disable-examples --disable-tests --disable-benchmarks --disable-debug --disable-debugutils --disable-gtk-doc-html --disable-gtk-doc-pdf --disable-introspection --disable-valgrind';
   const ip = path.join(__dirname, 'index.js');
   if (process.platform === 'linux') {
     // Linux uses caching, so until there's a way to mock around @actions/cache,
