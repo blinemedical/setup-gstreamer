@@ -78,8 +78,7 @@ async function run() {
         const installDir =
           process.env.GSTREAMER_INSTALL_DIR ?? path.join(isSelfHosted() ? 'C:' : 'D:', `gstreamer\\1.0\\msvc_${arch}`);
 
-        const sourceDir =
-          process.env.GSTREAMER_INSTALL_DIR ?? path.join(isSelfHosted() ? 'C:' : 'D:', 'gstreamer_source');
+        const sourceDir = path.join(isSelfHosted() ? 'C:' : 'D:', 'gstreamer_source');
 
         core.info("Cloning gstreamer's git repository...");
         await exec.exec('git', ['config', '--global', 'http.postBuffer', '524288000']);
