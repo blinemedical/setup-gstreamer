@@ -52,6 +52,7 @@ jobs:
       uses: ./
       with:
         arch: ${{ matrix.arch }}
+        buildSource: ${{ matrix.buildSource }}
 
     - name: Run gst-inspect --version
       run: |
