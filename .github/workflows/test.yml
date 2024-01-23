@@ -14,9 +14,8 @@ jobs:
         os: ['windows-2019', 'windows-2022', 'macos-12', 'ubuntu-20.04']
     steps:
     - uses: actions/checkout@v4
-
-    - name: Tests
-      run: npm ci && npm test
+    - run: npm ci
+    - run: npm test
 
   # test action works running from the graph
   test:

@@ -10,7 +10,7 @@ inputs:
     required:    false
     default:     '1.22.7'
   arch:
-    description: 'architecture (x86, x86_64)''
+    description: 'architecture (x86, x86_64)'
     required:    false
     default:     'x86_64'
   repoUrl:
