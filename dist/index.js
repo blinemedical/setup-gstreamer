@@ -92392,7 +92392,7 @@ async function run() {
         core.setFailed('"arch" may only be x86 or x86_64');
       }
 
-      if(buildSource) {
+      if (buildSource) {
         const installDir =
           process.env.GSTREAMER_INSTALL_DIR ?? path.join(isSelfHosted() ? 'C:' : 'D:', `gstreamer\\1.0\\msvc_${arch}`);
 
@@ -92436,7 +92436,7 @@ async function run() {
         gstreamerPath = installDir;
       } else {
         const installDir =
-        process.env.GSTREAMER_INSTALL_DIR ?? path.join(isSelfHosted() ? 'C:' : 'D:', 'gstreamer');
+          process.env.GSTREAMER_INSTALL_DIR ?? path.join(isSelfHosted() ? 'C:' : 'D:', 'gstreamer');
 
         const installers = [
           `gstreamer-1.0-msvc-${arch}-${version}.msi`,
@@ -92476,9 +92476,11 @@ async function run() {
     } else if (process.platform === 'darwin') {
       if (arch == 'x86') {
         core.setFailed(`GStreamer binaries for ${process.platform} and x86 are not available`);
+        return;
       }
       if (buildSource) {
         core.setFailed(`Cannot build from source for ${process.platform}`);
+        return;
       }
       let pkgType = arch;
       if (semver.gte(version, '1.19.90')) {
@@ -92512,6 +92514,7 @@ async function run() {
       // developing with gstreamer on that flavor of linux.
       if (!buildSource) {
         core.setFailed(`Installer binary packages for ${process.platform} are not available. Must build from source.`);
+        return;
       }
 
       let distro = await parseEtcRelease();
