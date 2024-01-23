@@ -26,10 +26,7 @@ jobs:
       run: pip install setuptools meson ninja
 
     - name: Tests
-      run: |
-        npm ci
-        &&
-        run: npm test
+      run: npm ci && npm test
 
   # test action works running from the graph
   test:
