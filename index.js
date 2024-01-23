@@ -59,6 +59,7 @@ async function run() {
     const version = core.getInput('version');
     const arch = core.getInput('arch');
     const gitUrl = core.getInput('repoUrl');
+    const buildSource = core.getBooleanInput('buildSource');
     let gstreamerPath = '';
     let gstreamerBinPath = '';
     let gstreamerPkgConfigPath = '';
@@ -73,46 +74,80 @@ async function run() {
         core.setFailed('"arch" may only be x86 or x86_64');
       }
 
-      const installDir =
-        process.env.GSTREAMER_INSTALL_DIR ?? path.join(isSelfHosted() ? 'C:' : 'D:', `gstreamer\\1.0\\msvc_${arch}`);
+      if(buildSource) {
+        const installDir =
+          process.env.GSTREAMER_INSTALL_DIR ?? path.join(isSelfHosted() ? 'C:' : 'D:', `gstreamer\\1.0\\msvc_${arch}`);
 
-      const sourceDir =
-        process.env.GSTREAMER_INSTALL_DIR ?? path.join(isSelfHosted() ? 'C:' : 'D:', 'gstreamer_source');
+        const sourceDir =
+          process.env.GSTREAMER_INSTALL_DIR ?? path.join(isSelfHosted() ? 'C:' : 'D:', 'gstreamer_source');
 
-      core.info("Cloning gstreamer's git repository...");
-      await exec.exec('git', ['config', '--global', 'http.postBuffer', '524288000']);
-      await exec.exec('git', [
-        'clone',
-        '--progress',
-        '--verbose',
-        '--depth',
-        '1',
-        '--branch',
-        version,
-        gitUrl,
-        sourceDir,
-      ]);
+        core.info("Cloning gstreamer's git repository...");
+        await exec.exec('git', ['config', '--global', 'http.postBuffer', '524288000']);
+        await exec.exec('git', [
+          'clone',
+          '--progress',
+          '--verbose',
+          '--depth',
+          '1',
+          '--branch',
+          version,
+          gitUrl,
+          sourceDir,
+        ]);
 
-      const sourceTarget = { cwd: `${sourceDir}` };
-      const buildArguments = core.getInput('gstreamerOptions').split(',');
+        const sourceTarget = { cwd: `${sourceDir}` };
+        const buildArguments = core.getInput('gstreamerOptions').split(',');
 
-      await exec.exec(
-        'meson',
-        [
-          'setup',
-          'builddir',
-          '--vsenv',
-          `--prefix=${installDir}`,
-          '--buildtype=debugoptimized'
-        ].concat(buildArguments),
-        sourceTarget
-      );
-      await exec.exec('meson', ['compile', '-C', 'builddir'], sourceTarget);
+        await exec.exec(
+          'meson',
+          [
+            'setup',
+            'builddir',
+            '--vsenv',
+            `--prefix=${installDir}`,
+            '--buildtype=debugoptimized'
+          ].concat(buildArguments),
+          sourceTarget
+        );
+        await exec.exec('meson', ['compile', '-C', 'builddir'], sourceTarget);
 
-      core.info(`Installing gstreamer ${version} to ${installDir}`);
-      await exec.exec('meson', ['install', '-C', 'builddir'], sourceTarget);
+        core.info(`Installing gstreamer ${version} to ${installDir}`);
+        await exec.exec('meson', ['install', '-C', 'builddir'], sourceTarget);
 
-      gstreamerPath = installDir;
+        await io.rmRF(sourceDir);
+        gstreamerPath = installDir;
+      } else {
+        const installDir =
+        process.env.GSTREAMER_INSTALL_DIR ?? path.join(isSelfHosted() ? 'C:' : 'D:', 'gstreamer');
+
+        const installers = [
+          `gstreamer-1.0-msvc-${arch}-${version}.msi`,
+          `gstreamer-1.0-devel-msvc-${arch}-${version}.msi`,
+        ];
+
+        for (const installer of installers) {
+          const url = `${baseUrl}/windows/${version}/msvc/${installer}`;
+
+          core.info(`Downloading: ${url}`);
+          const installerPath = await tc.downloadTool(url, installer);
+
+          if (installerPath) {
+            await exec.exec('msiexec', [
+              '/passive',
+              `INSTALLDIR=${installDir}`,
+              'ADDLOCAL=ALL',
+              '/i',
+              installerPath,
+            ]);
+            await io.rmRF(installerPath);
+          } else {
+            core.setFailed(`Failed to download ${url}`);
+          }
+        }
+
+        gstreamerPath = path.join(installDir, '1.0', `msvc_${arch}`);
+      }
+
       gstreamerBinPath = path.join(gstreamerPath, 'bin');
       gstreamerPkgConfigPath = path.join(gstreamerPath, 'lib', 'pkgconfig');
 
@@ -123,6 +158,9 @@ async function run() {
     } else if (process.platform === 'darwin') {
       if (arch == 'x86') {
         core.setFailed(`GStreamer binaries for ${process.platform} and x86 are not available`);
+      }
+      if (buildSource) {
+        core.setFailed(`Cannot build from source for ${process.platform}`);
       }
       let pkgType = arch;
       if (semver.gte(version, '1.19.90')) {
@@ -154,6 +192,10 @@ async function run() {
       // Determine what flavor of linux is running using exec.  Branch from
       // there to install the necessary package and tool dependencies for
       // developing with gstreamer on that flavor of linux.
+      if (!buildSource) {
+        core.setFailed(`Installer binary packages for ${process.platform} are not available. Must build from source.`);
+      }
+
       let distro = await parseEtcRelease();
 
       if (distro.name && distro.versionId) {

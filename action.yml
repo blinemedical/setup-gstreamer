@@ -1,29 +1,33 @@
-name: Setup GStreamer
-description: Setup GStreamer in the environment
-author: Laerdal Labs, DC
+name: 'Setup GStreamer'
+description: 'Setup GStreamer in the environment'
+author: 'Laerdal Labs, DC'
 branding:
-  color: red
-  icon:  activity
+  color: 'red'
+  icon:  'activity'
 inputs:
   version:
-    description: version number
+    description: 'version number'
     required:    false
-    default:     1.22.7
+    default:     '1.22.7'
   arch:
-    description: architecture (x86, x86_64)
+    description: 'architecture (x86, x86_64)''
     required:    false
-    default:     x86_64
+    default:     'x86_64'
   repoUrl:
-    description: the location of the source repository
+    description: 'the location of the source repository'
     required:    false
-    default:     https://gitlab.freedesktop.org/gstreamer/gstreamer.git
+    default:     'https://gitlab.freedesktop.org/gstreamer/gstreamer.git'
+  buildSource:
+    description: 'whether to use installer package or build from source'
+    required: false
+    default: false
   gstreamerOptions:
-    description: The option configuration string for buliding GStreamer from source
+    description: 'The option configuration string for buliding GStreamer from source'
     required:    false
-    default: -Dlibnice:tests=disabled,-Dlibnice:examples=disabled,-Dopenh264:tests=disabled,-Dpygobject:tests=false,-Dpython=enabled,-Dlibav=enabled,-Dugly=enabled,-Dbad=enabled,-Ddevtools=enabled,-Dges=enabled,-Drtsp_server=enabled,-Dvaapi=enabled,-Dsharp=disabled,-Dgpl=enabled,-Dpython=disabled,-Dvaapi=disabled,-Dgst-plugins-base:pango=enabled,-Dgst-plugins-good:cairo=enabled,-Dgst-plugins-good:soup=enabled,-Dgst-plugins-good:soup-lookup-dep=true
+    default: '-Dlibnice:tests=disabled,-Dlibnice:examples=disabled,-Dopenh264:tests=disabled,-Dpygobject:tests=false,-Dpython=enabled,-Dlibav=enabled,-Dugly=enabled,-Dbad=enabled,-Ddevtools=enabled,-Dges=enabled,-Drtsp_server=enabled,-Dvaapi=enabled,-Dsharp=disabled,-Dgpl=enabled,-Dpython=disabled,-Dvaapi=disabled,-Dgst-plugins-base:pango=enabled,-Dgst-plugins-good:cairo=enabled,-Dgst-plugins-good:soup=enabled,-Dgst-plugins-good:soup-lookup-dep=true'
 outputs:
   gstreamerPath:
-    description: Installation path
+    description: 'Installation path'
 runs:
-  using: node16
-  main: dist/index.js
+  using: 'node16'
+  main: 'dist/index.js'

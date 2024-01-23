@@ -15,16 +15,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install Python for Windows
-      if: matrix.os == 'windows-2019' || matrix.os == 'windows-2022'
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.x'
-
-    - name: Install Meson and Ninja Dependencies for Windows
-      if: matrix.os == 'windows-2019' || matrix.os == 'windows-2022'
-      run: pip install setuptools meson ninja
-
     - name: Tests
       run: npm ci && npm test
 
@@ -35,11 +25,16 @@ jobs:
       matrix:
         os: ['windows-2019', 'windows-2022', 'macos-12', 'ubuntu-20.04']
         arch: ['x86', 'x86_64']
+        buildSource: [true, false]
         exclude:
           - os:   'macos-12'
             arch: 'x86'
           - os:   'ubuntu-20.04'
             arch: 'x86'
+          - os:   'macos-12'
+            buildSource: true
+          - os:   'ubuntu-20.04'
+            buildSource: false
 
     steps:
     - uses: actions/checkout@v4
