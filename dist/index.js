@@ -92338,6 +92338,11 @@ function LinuxDistroCommand(command, args) {
   return { cmd: command, args: args };
 }
 
+const combineBuildArgs = (systemArgs, userArgs) =>
+  systemArgs
+    .filter((systemArg) => !userArgs.some((userArg) => userArg.startsWith(systemArg.split('=')[0])))
+    .concat(userArgs);
+
 // Github action runners (shared) currently run in passwordless sudo mode.
 const DistroVersionPackageMap = {
   Ubuntu: LinuxDistroConfig(['20.04', '22.04'], {}, [
@@ -92377,7 +92382,8 @@ async function run() {
     const version = core.getInput('version');
     const arch = core.getInput('arch');
     const gitUrl = core.getInput('repoUrl');
-    const buildSource = core.getBooleanInput('buildSource');
+    const buildSource = core.getBooleanInput('forceBuildFromSource');
+    const userBuildArgs = core.getInput('gstreamerOptions');
     let gstreamerPath = '';
     let gstreamerBinPath = '';
     let gstreamerPkgConfigPath = '';
@@ -92413,17 +92419,20 @@ async function run() {
         ]);
 
         const sourceTarget = { cwd: `${sourceDir}` };
-        const buildArguments = core.getInput('gstreamerOptions').split(',');
+        const windowsBuildArgs = [
+          '--buildtype=debugoptimized',
+        ];
+        const buildArgs = combineBuildArgs(windowsBuildArgs, userBuildArgs);
 
         await exec.exec(
           'meson',
           [
             'setup',
-            'builddir',
             '--vsenv',
             `--prefix=${installDir}`,
-            '--buildtype=debugoptimized'
-          ].concat(buildArguments),
+            ...buildArgs,
+            'builddir'
+          ],
           sourceTarget
         );
         await exec.exec('meson', ['compile', '-C', 'builddir'], sourceTarget);
@@ -92511,11 +92520,6 @@ async function run() {
       // Determine what flavor of linux is running using exec.  Branch from
       // there to install the necessary package and tool dependencies for
       // developing with gstreamer on that flavor of linux.
-      if (!buildSource) {
-        core.setFailed(`Installer binary packages for ${process.platform} are not available. Must build from source.`);
-        return;
-      }
-
       let distro = await parseEtcRelease();
 
       if (distro.name && distro.versionId) {
@@ -92569,17 +92573,23 @@ async function run() {
                 gstsrc,
               ]);
 
+              const linuxBuildArgs = [
+                '-Dges=disabled',
+                '-Dtests=disabled',
+                '-Dexamples=disabled',
+                '-Dgst-examples=disabled',
+                '-Ddoc=disabled',
+                '-Dgtk_doc=disabled',
+                '-Dgpl=enabled',
+              ];
+              const buildArgs = combineBuildArgs(linuxBuildArgs, userBuildArgs);
+
               await exec.exec(
                 'meson',
                 [
+                  'setup',
                   `--prefix=${prefix}`,
-                  '-Dges=disabled',
-                  '-Dtests=disabled',
-                  '-Dexamples=disabled',
-                  '-Dgst-examples=disabled',
-                  '-Ddoc=disabled',
-                  '-Dgtk_doc=disabled',
-                  '-Dgpl=enabled',
+                  ...buildArgs,
                   'builddir',
                 ],
                 opt
