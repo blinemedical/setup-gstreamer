@@ -65,8 +65,10 @@ async function run() {
     const arch = core.getInput('arch');
     const gitUrl = core.getInput('repoUrl');
     const buildSource = core.getBooleanInput('forceBuildFromSource');
-    core.info(`gstreamerOptions: ${core.getInput('gstreamerOptions')}`)
-    const userBuildArgs = core.getInput('gstreamerOptions').split(' ');
+    const userBuildArgs = core.getInput('gstreamerOptions')
+      .split(/[\r\n]/)
+      .map(input => input.trim())
+      .filter(input => input !== '');
     let gstreamerPath = '';
     let gstreamerBinPath = '';
     let gstreamerPkgConfigPath = '';
@@ -111,10 +113,10 @@ async function run() {
           'meson',
           [
             'setup',
-            'builddir',
             '--vsenv',
             `--prefix=${installDir}`,
-            ...buildArgs
+            ...buildArgs,
+            'builddir',
           ],
           sourceTarget
         );
