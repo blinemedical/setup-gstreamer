@@ -17,8 +17,8 @@ inputs:
     description: 'the location of the source repository'
     required:    false
     default:     'https://gitlab.freedesktop.org/gstreamer/gstreamer.git'
-  buildSource:
-    description: 'whether to use installer package or build from source'
+  forceBuildFromSource:
+    description: 'whether to force building from source instead of using installer package'
     required: false
     default: false
   gstreamerOptions:
