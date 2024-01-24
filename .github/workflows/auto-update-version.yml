@@ -2,9 +2,12 @@ name: Auto Update Version
 run-name: Move to ${{ github.ref_name }}
 
 on:
-  push:
-    tags:
-      - v*
+  #changed to workflow_dispatch to disable auto trigger until we figure out the public/private repo issue
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Target Tag
+        required: true
 
 jobs:
   update:
