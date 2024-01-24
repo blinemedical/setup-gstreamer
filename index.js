@@ -65,10 +65,7 @@ async function run() {
     const arch = core.getInput('arch');
     const gitUrl = core.getInput('repoUrl');
     const buildSource = core.getBooleanInput('forceBuildFromSource');
-    const userBuildArgs = core.getInput('gstreamerOptions')
-      .split(/[\r\n]/)
-      .map(input => input.trim())
-      .filter(input => input !== '');
+    const userBuildArgs = core.getMultilineInput('gstreamerOptions');
     let gstreamerPath = '';
     let gstreamerBinPath = '';
     let gstreamerPkgConfigPath = '';
