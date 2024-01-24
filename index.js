@@ -20,6 +20,11 @@ function LinuxDistroCommand(command, args) {
   return { cmd: command, args: args };
 }
 
+const combineBuildArgs = (systemArgs, userArgs) =>
+  systemArgs
+    .filter((systemArg) => !userArgs.some((userArg) => userArg.startsWith(systemArg.split('=')[0])))
+    .concat(userArgs);
+
 // Github action runners (shared) currently run in passwordless sudo mode.
 const DistroVersionPackageMap = {
   Ubuntu: LinuxDistroConfig(['20.04', '22.04'], {}, [
@@ -59,6 +64,8 @@ async function run() {
     const version = core.getInput('version');
     const arch = core.getInput('arch');
     const gitUrl = core.getInput('repoUrl');
+    const buildSource = core.getBooleanInput('forceBuildFromSource');
+    const userBuildArgs = core.getMultilineInput('gstreamerOptions');
     let gstreamerPath = '';
     let gstreamerBinPath = '';
     let gstreamerPkgConfigPath = '';
@@ -73,35 +80,82 @@ async function run() {
         core.setFailed('"arch" may only be x86 or x86_64');
       }
 
-      const installDir =
-        process.env.GSTREAMER_INSTALL_DIR ?? path.join(isSelfHosted() ? 'C:' : 'D:', 'gstreamer');
+      if (buildSource) {
+        const installDir =
+          process.env.GSTREAMER_INSTALL_DIR ?? path.join(isSelfHosted() ? 'C:' : 'D:', `gstreamer\\1.0\\msvc_${arch}`);
 
-      const installers = [
-        `gstreamer-1.0-msvc-${arch}-${version}.msi`,
-        `gstreamer-1.0-devel-msvc-${arch}-${version}.msi`,
-      ];
+        const sourceDir = path.join(isSelfHosted() ? 'C:' : 'D:', 'gstreamer_source');
 
-      for (const installer of installers) {
-        const url = `${baseUrl}/windows/${version}/msvc/${installer}`;
+        core.info("Cloning gstreamer's git repository...");
+        await exec.exec('git', ['config', '--global', 'http.postBuffer', '524288000']);
+        await exec.exec('git', [
+          'clone',
+          '--progress',
+          '--verbose',
+          '--depth',
+          '1',
+          '--branch',
+          version,
+          gitUrl,
+          sourceDir,
+        ]);
 
-        core.info(`Downloading: ${url}`);
-        const installerPath = await tc.downloadTool(url, installer);
+        const sourceTarget = { cwd: `${sourceDir}` };
+        const windowsBuildArgs = [
+          '--buildtype=debugoptimized',
+        ];
+        const buildArgs = combineBuildArgs(windowsBuildArgs, userBuildArgs);
 
-        if (installerPath) {
-          await exec.exec('msiexec', [
-            '/passive',
-            `INSTALLDIR=${installDir}`,
-            'ADDLOCAL=ALL',
-            '/i',
-            installerPath,
-          ]);
-          await io.rmRF(installerPath);
-        } else {
-          core.setFailed(`Failed to download ${url}`);
+        await exec.exec(
+          'meson',
+          [
+            'setup',
+            '--vsenv',
+            `--prefix=${installDir}`,
+            ...buildArgs,
+            'builddir',
+          ],
+          sourceTarget
+        );
+        await exec.exec('meson', ['compile', '-C', 'builddir'], sourceTarget);
+
+        core.info(`Installing gstreamer ${version} to ${installDir}`);
+        await exec.exec('meson', ['install', '-C', 'builddir'], sourceTarget);
+
+        await io.rmRF(sourceDir);
+        gstreamerPath = installDir;
+      } else {
+        const installDir =
+          process.env.GSTREAMER_INSTALL_DIR ?? path.join(isSelfHosted() ? 'C:' : 'D:', 'gstreamer');
+
+        const installers = [
+          `gstreamer-1.0-msvc-${arch}-${version}.msi`,
+          `gstreamer-1.0-devel-msvc-${arch}-${version}.msi`,
+        ];
+
+        for (const installer of installers) {
+          const url = `${baseUrl}/windows/${version}/msvc/${installer}`;
+
+          core.info(`Downloading: ${url}`);
+          const installerPath = await tc.downloadTool(url, installer);
+
+          if (installerPath) {
+            await exec.exec('msiexec', [
+              '/passive',
+              `INSTALLDIR=${installDir}`,
+              'ADDLOCAL=ALL',
+              '/i',
+              installerPath,
+            ]);
+            await io.rmRF(installerPath);
+          } else {
+            core.setFailed(`Failed to download ${url}`);
+          }
         }
+
+        gstreamerPath = path.join(installDir, '1.0', `msvc_${arch}`);
       }
 
-      gstreamerPath = path.join(installDir, '1.0', `msvc_${arch}`);
       gstreamerBinPath = path.join(gstreamerPath, 'bin');
       gstreamerPkgConfigPath = path.join(gstreamerPath, 'lib', 'pkgconfig');
 
@@ -112,6 +166,11 @@ async function run() {
     } else if (process.platform === 'darwin') {
       if (arch == 'x86') {
         core.setFailed(`GStreamer binaries for ${process.platform} and x86 are not available`);
+        return;
+      }
+      if (buildSource) {
+        core.setFailed(`Cannot build from source for ${process.platform}`);
+        return;
       }
       let pkgType = arch;
       if (semver.gte(version, '1.19.90')) {
@@ -196,17 +255,23 @@ async function run() {
                 gstsrc,
               ]);
 
+              const linuxBuildArgs = [
+                '-Dges=disabled',
+                '-Dtests=disabled',
+                '-Dexamples=disabled',
+                '-Dgst-examples=disabled',
+                '-Ddoc=disabled',
+                '-Dgtk_doc=disabled',
+                '-Dgpl=enabled',
+              ];
+              const buildArgs = combineBuildArgs(linuxBuildArgs, userBuildArgs);
+
               await exec.exec(
                 'meson',
                 [
+                  'setup',
                   `--prefix=${prefix}`,
-                  '-Dges=disabled',
-                  '-Dtests=disabled',
-                  '-Dexamples=disabled',
-                  '-Dgst-examples=disabled',
-                  '-Ddoc=disabled',
-                  '-Dgtk_doc=disabled',
-                  '-Dgpl=enabled',
+                  ...buildArgs,
                   'builddir',
                 ],
                 opt

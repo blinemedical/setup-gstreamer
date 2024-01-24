@@ -1,0 +1,17 @@
+name: Auto Update Version
+run-name: Move to ${{ github.ref_name }}
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: update version
+        id: update-version
+        uses: blinemedical/action-update-version@v1
+        with:
+          target: ${{ github.ref_name }}

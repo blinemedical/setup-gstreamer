@@ -17,6 +17,34 @@ inputs:
     description: 'the location of the source repository'
     required:    false
     default:     'https://gitlab.freedesktop.org/gstreamer/gstreamer.git'
+  forceBuildFromSource:
+    description: 'whether to force building from source instead of using installer package'
+    required: false
+    default: false
+  gstreamerOptions:
+    description: 'The option configuration string for buliding GStreamer from source'
+    required:    false
+    default: |-
+      -Dlibnice:tests=disabled
+      -Dlibnice:examples=disabled
+      -Dopenh264:tests=disabled
+      -Dpygobject:tests=false
+      -Dpython=enabled
+      -Dlibav=enabled
+      -Dugly=enabled
+      -Dbad=enabled
+      -Ddevtools=enabled
+      -Dges=enabled
+      -Drtsp_server=enabled
+      -Dvaapi=enabled
+      -Dsharp=disabled
+      -Dgpl=enabled
+      -Dpython=disabled
+      -Dvaapi=disabled
+      -Dgst-plugins-base:pango=enabled
+      -Dgst-plugins-good:cairo=enabled
+      -Dgst-plugins-good:soup=enabled
+      -Dgst-plugins-good:soup-lookup-dep=true
 outputs:
   gstreamerPath:
     description: 'Installation path'
