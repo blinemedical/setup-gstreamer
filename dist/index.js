@@ -92383,7 +92383,7 @@ async function run() {
     const arch = core.getInput('arch');
     const gitUrl = core.getInput('repoUrl');
     const buildSource = core.getBooleanInput('forceBuildFromSource');
-    const userBuildArgs = core.getInput('gstreamerOptions');
+    const userBuildArgs = core.getInput('gstreamerOptions').split(' ');
     let gstreamerPath = '';
     let gstreamerBinPath = '';
     let gstreamerPkgConfigPath = '';
