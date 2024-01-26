@@ -35,3 +35,8 @@ exports.isSelfHosted = () =>
   process.env['AGENT_ISSELFHOSTED'] === '1' ||
   (process.env['AGENT_ISSELFHOSTED'] === undefined &&
     process.env['RUNNER_ENVIRONMENT'] !== 'github-hosted');
+
+exports.getWindowsDrive = (path) => {
+  const drive = path.split(':')[0];
+  return drive;
+}
