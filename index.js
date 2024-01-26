@@ -6,7 +6,7 @@ const github = require('@actions/github');
 const tc = require('@actions/tool-cache');
 const io = require('@actions/io');
 const semver = require('semver');
-const { parseEtcRelease, isSelfHosted } = require('./utils');
+const { parseEtcRelease, isSelfHosted, getWindowsDrive } = require('./utils');
 
 function LinuxDistroConfig(versionIds, envMap, commands) {
   return {
@@ -79,12 +79,11 @@ async function run() {
       if (arch != 'x86' && arch != 'x86_64') {
         core.setFailed('"arch" may only be x86 or x86_64');
       }
-
+      const rootDriveLetter = isSelfHosted() ? 'C:' : getWindowsDrive(process.cwd()) + ':';
       if (buildSource) {
         const installDir =
-          process.env.GSTREAMER_INSTALL_DIR ?? path.join(isSelfHosted() ? 'C:' : 'D:', `gstreamer\\1.0\\msvc_${arch}`);
-
-        const sourceDir = path.join(isSelfHosted() ? 'C:' : 'D:', 'gstreamer_source');
+          process.env.GSTREAMER_INSTALL_DIR ?? path.join(rootDriveLetter, `gstreamer\\1.0\\msvc_${arch}`);
+        const sourceDir = path.join(rootDriveLetter, 'gstreamer_source');
 
         core.info("Cloning gstreamer's git repository...");
         await exec.exec('git', ['config', '--global', 'http.postBuffer', '524288000']);
@@ -126,7 +125,7 @@ async function run() {
         gstreamerPath = installDir;
       } else {
         const installDir =
-          process.env.GSTREAMER_INSTALL_DIR ?? path.join(isSelfHosted() ? 'C:' : 'D:', 'gstreamer');
+          process.env.GSTREAMER_INSTALL_DIR ?? path.join(rootDriveLetter, 'gstreamer');
 
         const installers = [
           `gstreamer-1.0-msvc-${arch}-${version}.msi`,

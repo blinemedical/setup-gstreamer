@@ -90381,6 +90381,11 @@ exports.isSelfHosted = () =>
   (process.env['AGENT_ISSELFHOSTED'] === undefined &&
     process.env['RUNNER_ENVIRONMENT'] !== 'github-hosted');
 
+exports.getWindowsDrive = (path) => {
+  const drive = path.split(':')[0];
+  return drive;
+}
+
 
 /***/ }),
 
@@ -92324,7 +92329,7 @@ const github = __nccwpck_require__(5438);
 const tc = __nccwpck_require__(7784);
 const io = __nccwpck_require__(7436);
 const semver = __nccwpck_require__(1383);
-const { parseEtcRelease, isSelfHosted } = __nccwpck_require__(1252);
+const { parseEtcRelease, isSelfHosted, getWindowsDrive } = __nccwpck_require__(1252);
 
 function LinuxDistroConfig(versionIds, envMap, commands) {
   return {
@@ -92397,12 +92402,11 @@ async function run() {
       if (arch != 'x86' && arch != 'x86_64') {
         core.setFailed('"arch" may only be x86 or x86_64');
       }
-
+      const rootDriveLetter = isSelfHosted() ? 'C:' : getWindowsDrive(process.cwd()) + ':';
       if (buildSource) {
         const installDir =
-          process.env.GSTREAMER_INSTALL_DIR ?? path.join(isSelfHosted() ? 'C:' : 'D:', `gstreamer\\1.0\\msvc_${arch}`);
-
-        const sourceDir = path.join(isSelfHosted() ? 'C:' : 'D:', 'gstreamer_source');
+          process.env.GSTREAMER_INSTALL_DIR ?? path.join(rootDriveLetter, `gstreamer\\1.0\\msvc_${arch}`);
+        const sourceDir = path.join(rootDriveLetter, 'gstreamer_source');
 
         core.info("Cloning gstreamer's git repository...");
         await exec.exec('git', ['config', '--global', 'http.postBuffer', '524288000']);
@@ -92444,7 +92448,7 @@ async function run() {
         gstreamerPath = installDir;
       } else {
         const installDir =
-          process.env.GSTREAMER_INSTALL_DIR ?? path.join(isSelfHosted() ? 'C:' : 'D:', 'gstreamer');
+          process.env.GSTREAMER_INSTALL_DIR ?? path.join(rootDriveLetter, 'gstreamer');
 
         const installers = [
           `gstreamer-1.0-msvc-${arch}-${version}.msi`,
