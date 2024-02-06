@@ -92382,6 +92382,7 @@ const DistroVersionPackageMap = {
 };
 
 async function run() {
+  core.debug('This is a test');
   try {
     const baseUrl = 'https://gstreamer.freedesktop.org/data/pkg';
     const version = core.getInput('version');
