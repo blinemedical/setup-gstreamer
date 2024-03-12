@@ -7,6 +7,7 @@ test('test runs', () => {
   process.env['INPUT_VERSION'] = '1.22.7';
   process.env['INPUT_ARCH'] = 'x86_64';
   process.env['INPUT_FORCEBUILDFROMSOURCE'] = 'false';
+  process.env['msiUrl'] = null;
   const ip = path.join(__dirname, 'index.js');
   if (process.platform === 'linux') {
     // Linux uses caching, so until there's a way to mock around @actions/cache,
