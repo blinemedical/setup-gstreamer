@@ -388,6 +388,7 @@ if (!!core.getState('isPost')) {
   run();
 } else {
   if (process.platform === 'win32') {
+    const msiUrl = core.getInput('msiUrl');
     if (msiUrl) {
       core.info('Post job cleanup.');
       cleanup();
