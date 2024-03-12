@@ -366,6 +366,9 @@ async function run() {
 }
 
 async function cleanup() {
+  const arch = core.getInput('arch');
+  const version = core.getInput('version');
+
   const installers = [
     `gstreamer-1.0-msvc-${arch}-${version}.msi`,
     `gstreamer-1.0-devel-msvc-${arch}-${version}.msi`,
