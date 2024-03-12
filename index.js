@@ -66,6 +66,9 @@ async function run() {
     const gitUrl = core.getInput('repoUrl');
     const buildSource = core.getBooleanInput('forceBuildFromSource');
     const userBuildArgs = core.getMultilineInput('gstreamerOptions');
+    const msiUrl = core.getInput('msiUrl');
+    const devMsiUrl = core.getInput('devMsiUrl');
+    const buildRun = core.getInput('buildRun');
     let gstreamerPath = '';
     let gstreamerBinPath = '';
     let gstreamerPkgConfigPath = '';
@@ -124,34 +127,69 @@ async function run() {
         await io.rmRF(sourceDir);
         gstreamerPath = installDir;
       } else {
-        const installDir =
-          process.env.GSTREAMER_INSTALL_DIR ?? path.join(rootDriveLetter, 'gstreamer');
+        if (buildRun) {
+          const installDir = process.env.GSTREAMER_INSTALL_DIR ?? path.join(rootDriveLetter, `gstreamer\\${buildRun}`)
+        } else {
+          const installDir =
+            process.env.GSTREAMER_INSTALL_DIR ?? path.join(rootDriveLetter, 'gstreamer');
+        }
 
         const installers = [
           `gstreamer-1.0-msvc-${arch}-${version}.msi`,
           `gstreamer-1.0-devel-msvc-${arch}-${version}.msi`,
         ];
 
-        for (const installer of installers) {
-          const url = `${baseUrl}/windows/${version}/msvc/${installer}`;
+        if (msiUrl) {
+          core.info(`Downloading: ${msiUrl}`);
+          const msiInstallerPath = await tc.downloadTool(msiUrl, installer[0]);
 
-          core.info(`Downloading: ${url}`);
-          const installerPath = await tc.downloadTool(url, installer);
-
-          if (installerPath) {
+          if (msiInstallerPath) {
             await exec.exec('msiexec', [
               '/passive',
               `INSTALLDIR=${installDir}`,
               'ADDLOCAL=ALL',
               '/i',
-              installerPath,
+              msiInstallerPath,
             ]);
-            await io.rmRF(installerPath);
+            await io.rmRF(msiInstallerPath);
           } else {
-            core.setFailed(`Failed to download ${url}`);
+            core.setFailed(`Failed to download ${msiUrl}`);
+          }
+
+          core.info(`Downloading: ${devMsiUrl}`);
+          const devMsiInstallerPath = await tc.downloadTool(devMsiUrl, installer[1]);
+
+          if (devMsiInstallerPath) {
+            await exec.exec('msiexec', [
+              '/passive',
+              `INSTALLDIR=${installDir}`,
+              'ADDLOCAL=ALL',
+              '/i',
+              devMsiInstallerPath,
+            ]);
+          } else {
+            core.setFailed(`Failed to download ${devMsiUrl}`);
+          }
+        } else {
+          for (const installer of installers) {
+            const url = `${baseUrl}/windows/${version}/msvc/${installer}`;
+
+            core.info(`Downloading: ${url}`);
+            const installerPath = await tc.downloadTool(url, installer);
+
+            if (installerPath) {
+              await exec.exec('msiexec', [
+                '/passive',
+                `INSTALLDIR=${installDir}`,
+                'ADDLOCAL=ALL',
+                '/i',
+                installerPath,
+              ]);
+            } else {
+              core.setFailed(`Failed to download ${url}`);
+            }
           }
         }
-
         gstreamerPath = path.join(installDir, '1.0', `msvc_${arch}`);
       }
 
@@ -327,4 +365,33 @@ async function run() {
   }
 }
 
-run();
+async function cleanup() {
+  const installers = [
+    `gstreamer-1.0-msvc-${arch}-${version}.msi`,
+    `gstreamer-1.0-devel-msvc-${arch}-${version}.msi`,
+  ];
+
+  for (const installer of installers) {
+    await exec.exec('msiexec', [
+      '/passive',
+      '/uninstall',
+      installer,
+    ]);
+
+    await io.rmRF(installer);
+  }
+}
+
+
+if (!!core.getState('isPost')) {
+  core.saveState('isPost', 'true')
+  run();
+} else {
+  if (process.platform === 'win32') {
+    if (msiUrl) {
+      core.info('Post job cleanup.');
+      cleanup();
+    }
+  }
+}
+

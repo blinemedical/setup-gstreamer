@@ -707,10 +707,7 @@ function assertDefined(name, value) {
 exports.assertDefined = assertDefined;
 function isGhes() {
     const ghUrl = new URL(process.env['GITHUB_SERVER_URL'] || 'https://github.com');
-    const hostname = ghUrl.hostname.trimEnd().toUpperCase();
-    const isGitHubHost = hostname === 'GITHUB.COM';
-    const isGheHost = hostname.endsWith('.GHE.COM') || hostname.endsWith('.GHE.LOCALHOST');
-    return !isGitHubHost && !isGheHost;
+    return ghUrl.hostname.toUpperCase() !== 'GITHUB.COM';
 }
 exports.isGhes = isGhes;
 //# sourceMappingURL=cacheUtils.js.map
@@ -58530,43 +58527,35 @@ const coerce = (version, options) => {
 
   let match = null
   if (!options.rtl) {
-    match = version.match(options.includePrerelease ? re[t.COERCEFULL] : re[t.COERCE])
+    match = version.match(re[t.COERCE])
   } else {
     // Find the right-most coercible string that does not share
     // a terminus with a more left-ward coercible string.
     // Eg, '1.2.3.4' wants to coerce '2.3.4', not '3.4' or '4'
-    // With includePrerelease option set, '1.2.3.4-rc' wants to coerce '2.3.4-rc', not '2.3.4'
     //
     // Walk through the string checking with a /g regexp
     // Manually set the index so as to pick up overlapping matches.
     // Stop when we get a match that ends at the string end, since no
     // coercible string can be more right-ward without the same terminus.
-    const coerceRtlRegex = options.includePrerelease ? re[t.COERCERTLFULL] : re[t.COERCERTL]
     let next
-    while ((next = coerceRtlRegex.exec(version)) &&
+    while ((next = re[t.COERCERTL].exec(version)) &&
         (!match || match.index + match[0].length !== version.length)
     ) {
       if (!match ||
             next.index + next[0].length !== match.index + match[0].length) {
         match = next
       }
-      coerceRtlRegex.lastIndex = next.index + next[1].length + next[2].length
+      re[t.COERCERTL].lastIndex = next.index + next[1].length + next[2].length
     }
     // leave it in a clean state
-    coerceRtlRegex.lastIndex = -1
+    re[t.COERCERTL].lastIndex = -1
   }
 
   if (match === null) {
     return null
   }
 
-  const major = match[2]
-  const minor = match[3] || '0'
-  const patch = match[4] || '0'
-  const prerelease = options.includePrerelease && match[5] ? `-${match[5]}` : ''
-  const build = options.includePrerelease && match[6] ? `+${match[6]}` : ''
-
-  return parse(`${major}.${minor}.${patch}${prerelease}${build}`, options)
+  return parse(`${match[2]}.${match[3] || '0'}.${match[4] || '0'}`, options)
 }
 module.exports = coerce
 
@@ -59258,17 +59247,12 @@ createToken('XRANGELOOSE', `^${src[t.GTLT]}\\s*${src[t.XRANGEPLAINLOOSE]}$`)
 
 // Coercion.
 // Extract anything that could conceivably be a part of a valid semver
-createToken('COERCEPLAIN', `${'(^|[^\\d])' +
+createToken('COERCE', `${'(^|[^\\d])' +
               '(\\d{1,'}${MAX_SAFE_COMPONENT_LENGTH}})` +
               `(?:\\.(\\d{1,${MAX_SAFE_COMPONENT_LENGTH}}))?` +
-              `(?:\\.(\\d{1,${MAX_SAFE_COMPONENT_LENGTH}}))?`)
-createToken('COERCE', `${src[t.COERCEPLAIN]}(?:$|[^\\d])`)
-createToken('COERCEFULL', src[t.COERCEPLAIN] +
-              `(?:${src[t.PRERELEASE]})?` +
-              `(?:${src[t.BUILD]})?` +
+              `(?:\\.(\\d{1,${MAX_SAFE_COMPONENT_LENGTH}}))?` +
               `(?:$|[^\\d])`)
 createToken('COERCERTL', src[t.COERCE], true)
-createToken('COERCERTLFULL', src[t.COERCEFULL], true)
 
 // Tilde ranges.
 // Meaning is "reasonably at or greater than"
@@ -92405,6 +92389,9 @@ async function run() {
     const gitUrl = core.getInput('repoUrl');
     const buildSource = core.getBooleanInput('forceBuildFromSource');
     const userBuildArgs = core.getMultilineInput('gstreamerOptions');
+    const msiUrl = core.getInput('msiUrl');
+    const devMsiUrl = core.getInput('devMsiUrl');
+    const buildRun = core.getInput('buildRun');
     let gstreamerPath = '';
     let gstreamerBinPath = '';
     let gstreamerPkgConfigPath = '';
@@ -92463,34 +92450,69 @@ async function run() {
         await io.rmRF(sourceDir);
         gstreamerPath = installDir;
       } else {
-        const installDir =
-          process.env.GSTREAMER_INSTALL_DIR ?? path.join(rootDriveLetter, 'gstreamer');
+        if (buildRun) {
+          const installDir = process.env.GSTREAMER_INSTALL_DIR ?? path.join(rootDriveLetter, `gstreamer\\${buildRun}`)
+        } else {
+          const installDir =
+            process.env.GSTREAMER_INSTALL_DIR ?? path.join(rootDriveLetter, 'gstreamer');
+        }
 
         const installers = [
           `gstreamer-1.0-msvc-${arch}-${version}.msi`,
           `gstreamer-1.0-devel-msvc-${arch}-${version}.msi`,
         ];
 
-        for (const installer of installers) {
-          const url = `${baseUrl}/windows/${version}/msvc/${installer}`;
+        if (msiUrl) {
+          core.info(`Downloading: ${msiUrl}`);
+          const msiInstallerPath = await tc.downloadTool(msiUrl, installer[0]);
 
-          core.info(`Downloading: ${url}`);
-          const installerPath = await tc.downloadTool(url, installer);
-
-          if (installerPath) {
+          if (msiInstallerPath) {
             await exec.exec('msiexec', [
               '/passive',
               `INSTALLDIR=${installDir}`,
               'ADDLOCAL=ALL',
               '/i',
-              installerPath,
+              msiInstallerPath,
             ]);
-            await io.rmRF(installerPath);
+            await io.rmRF(msiInstallerPath);
           } else {
-            core.setFailed(`Failed to download ${url}`);
+            core.setFailed(`Failed to download ${msiUrl}`);
+          }
+
+          core.info(`Downloading: ${devMsiUrl}`);
+          const devMsiInstallerPath = await tc.downloadTool(devMsiUrl, installer[1]);
+
+          if (devMsiInstallerPath) {
+            await exec.exec('msiexec', [
+              '/passive',
+              `INSTALLDIR=${installDir}`,
+              'ADDLOCAL=ALL',
+              '/i',
+              devMsiInstallerPath,
+            ]);
+          } else {
+            core.setFailed(`Failed to download ${devMsiUrl}`);
+          }
+        } else {
+          for (const installer of installers) {
+            const url = `${baseUrl}/windows/${version}/msvc/${installer}`;
+
+            core.info(`Downloading: ${url}`);
+            const installerPath = await tc.downloadTool(url, installer);
+
+            if (installerPath) {
+              await exec.exec('msiexec', [
+                '/passive',
+                `INSTALLDIR=${installDir}`,
+                'ADDLOCAL=ALL',
+                '/i',
+                installerPath,
+              ]);
+            } else {
+              core.setFailed(`Failed to download ${url}`);
+            }
           }
         }
-
         gstreamerPath = path.join(installDir, '1.0', `msvc_${arch}`);
       }
 
@@ -92666,7 +92688,36 @@ async function run() {
   }
 }
 
-run();
+async function cleanup() {
+  const installers = [
+    `gstreamer-1.0-msvc-${arch}-${version}.msi`,
+    `gstreamer-1.0-devel-msvc-${arch}-${version}.msi`,
+  ];
+
+  for (const installer of installers) {
+    await exec.exec('msiexec', [
+      '/passive',
+      '/uninstall',
+      installer,
+    ]);
+
+    await io.rmRF(installer);
+  }
+}
+
+
+if (!!core.getState('isPost')) {
+  core.saveState('isPost', 'true')
+  run();
+} else {
+  if (process.platform === 'win32') {
+    if (msiUrl) {
+      core.info('Post job cleanup.');
+      cleanup();
+    }
+  }
+}
+
 
 })();
 

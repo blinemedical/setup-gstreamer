@@ -45,6 +45,15 @@ inputs:
       -Dgst-plugins-good:cairo=enabled
       -Dgst-plugins-good:soup=enabled
       -Dgst-plugins-good:soup-lookup-dep=true
+    msiUrl:
+      description: 'Optional override of the URL from which to download the Windows runtime msi installer'
+      required: false
+    devMsiUrl:
+      description: 'Optional override of the URL from which to download the Windows development libraries msi installer'
+      required: false
+    buildRun:
+      description: 'Optional input with the run number for the workflow'
+      required: false
 outputs:
   gstreamerPath:
     description: 'Installation path'
