@@ -92466,10 +92466,11 @@ async function run() {
         await io.rmRF(sourceDir);
         gstreamerPath = installDir;
       } else {
+        let installDir = '';
         if (buildRun) {
-          const installDir = process.env.GSTREAMER_INSTALL_DIR ?? path.join(rootDriveLetter, `gstreamer\\${buildRun}`)
+          installDir = process.env.GSTREAMER_INSTALL_DIR ?? path.join(rootDriveLetter, `gstreamer\\${buildRun}`)
         } else {
-          const installDir =
+          installDir =
             process.env.GSTREAMER_INSTALL_DIR ?? path.join(rootDriveLetter, 'gstreamer');
         }
 
@@ -92725,8 +92726,8 @@ async function cleanup() {
 }
 
 
-if (!!core.getState('isPost')) {
-  core.saveState('isPost', 'true')
+if (!core.getState('isPost')) {
+  core.saveState('isPost', 'true');
   run();
 } else {
   if (process.platform === 'win32') {
