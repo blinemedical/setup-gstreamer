@@ -4,7 +4,7 @@ const path = require('path');
 
 // shows how the runner will run a javascript action with env / stdout protocol
 test('test runs', () => {
-  process.env['INPUT_VERSION'] = '1.22.7';
+  process.env['INPUT_VERSION'] = '1.22.9';
   process.env['INPUT_ARCH'] = 'x86_64';
   process.env['INPUT_FORCEBUILDFROMSOURCE'] = 'false';
   process.env['INPUT_MSIURL'] = null;

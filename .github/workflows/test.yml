@@ -53,6 +53,7 @@ jobs:
       with:
         arch: ${{ matrix.arch }}
         forceBuildFromSource: ${{ matrix.buildSource }}
+        version: '1.22.9'
 
     - name: Run gst-inspect --version
       run: |
