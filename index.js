@@ -64,7 +64,6 @@ async function run() {
     const version = core.getInput('version');
     const arch = core.getInput('arch');
     const gitUrl = core.getInput('repoUrl');
-    const buildSource = core.getBooleanInput('forceBuildFromSource');
     const userBuildArgs = core.getMultilineInput('gstreamerOptions');
     const msiUrl = core.getInput('msiUrl');
     const devMsiUrl = core.getInput('devMsiUrl');
@@ -83,117 +82,72 @@ async function run() {
         core.setFailed('"arch" may only be x86 or x86_64');
       }
       const rootDriveLetter = isSelfHosted() ? 'C:' : getWindowsDrive(process.cwd()) + ':';
-      if (buildSource) {
-        const installDir =
-          process.env.GSTREAMER_INSTALL_DIR ?? path.join(rootDriveLetter, `gstreamer\\1.0\\msvc_${arch}`);
-        const sourceDir = path.join(rootDriveLetter, 'gstreamer_source');
 
-        core.info("Cloning gstreamer's git repository...");
-        await exec.exec('git', ['config', '--global', 'http.postBuffer', '524288000']);
-        await exec.exec('git', [
-          'clone',
-          '--progress',
-          '--verbose',
-          '--depth',
-          '1',
-          '--branch',
-          version,
-          gitUrl,
-          sourceDir,
-        ]);
-
-        const sourceTarget = { cwd: `${sourceDir}` };
-        const windowsBuildArgs = [
-          '--buildtype=debugoptimized',
-        ];
-        const buildArgs = combineBuildArgs(windowsBuildArgs, userBuildArgs);
-
-        await exec.exec(
-          'meson',
-          [
-            'setup',
-            '--vsenv',
-            `--prefix=${installDir}`,
-            ...buildArgs,
-            'builddir',
-          ],
-          sourceTarget
-        );
-        await exec.exec('meson', ['compile', '-C', 'builddir'], sourceTarget);
-
-        core.info(`Installing gstreamer ${version} to ${installDir}`);
-        await exec.exec('meson', ['install', '-C', 'builddir'], sourceTarget);
-
-        await io.rmRF(sourceDir);
-        gstreamerPath = installDir;
+      let installDir = '';
+      if (buildRun) {
+        installDir = process.env.GSTREAMER_INSTALL_DIR ?? path.join(rootDriveLetter, `gstreamer\\${buildRun}`)
       } else {
-        let installDir = '';
-        if (buildRun) {
-          installDir = process.env.GSTREAMER_INSTALL_DIR ?? path.join(rootDriveLetter, `gstreamer\\${buildRun}`)
-        } else {
-          installDir =
-            process.env.GSTREAMER_INSTALL_DIR ?? path.join(rootDriveLetter, 'gstreamer');
-        }
-
-        const installers = [
-          `gstreamer-1.0-msvc-${arch}-${version}.msi`,
-          `gstreamer-1.0-devel-msvc-${arch}-${version}.msi`,
-        ];
-
-        if (msiUrl) {
-          core.info(`Downloading: ${msiUrl}`);
-          const msiInstallerPath = await tc.downloadTool(msiUrl, installer[0]);
-
-          if (msiInstallerPath) {
-            await exec.exec('msiexec', [
-              '/passive',
-              `INSTALLDIR=${installDir}`,
-              'ADDLOCAL=ALL',
-              '/i',
-              msiInstallerPath,
-            ]);
-            await io.rmRF(msiInstallerPath);
-          } else {
-            core.setFailed(`Failed to download ${msiUrl}`);
-          }
-
-          core.info(`Downloading: ${devMsiUrl}`);
-          const devMsiInstallerPath = await tc.downloadTool(devMsiUrl, installer[1]);
-
-          if (devMsiInstallerPath) {
-            await exec.exec('msiexec', [
-              '/passive',
-              `INSTALLDIR=${installDir}`,
-              'ADDLOCAL=ALL',
-              '/i',
-              devMsiInstallerPath,
-            ]);
-          } else {
-            core.setFailed(`Failed to download ${devMsiUrl}`);
-          }
-        } else {
-          for (const installer of installers) {
-            const url = `${baseUrl}/windows/${version}/msvc/${installer}`;
-
-            core.info(`Downloading: ${url}`);
-            const installerPath = await tc.downloadTool(url, installer);
-
-            if (installerPath) {
-              await exec.exec('msiexec', [
-                '/passive',
-                `INSTALLDIR=${installDir}`,
-                'ADDLOCAL=ALL',
-                '/i',
-                installerPath,
-              ]);
-            } else {
-              core.setFailed(`Failed to download ${url}`);
-            }
-          }
-        }
-        gstreamerPath = path.join(installDir, '1.0', `msvc_${arch}`);
+        installDir =
+          process.env.GSTREAMER_INSTALL_DIR ?? path.join(rootDriveLetter, 'gstreamer');
       }
 
+      const installers = [
+        `gstreamer-1.0-msvc-${arch}-${version}.msi`,
+        `gstreamer-1.0-devel-msvc-${arch}-${version}.msi`,
+      ];
+
+      if (msiUrl) {
+        core.info(`Downloading: ${msiUrl}`);
+        const msiInstallerPath = await tc.downloadTool(msiUrl, installer[0]);
+
+        if (msiInstallerPath) {
+          await exec.exec('msiexec', [
+            '/passive',
+            `INSTALLDIR=${installDir}`,
+            'ADDLOCAL=ALL',
+            '/i',
+            msiInstallerPath,
+          ]);
+          await io.rmRF(msiInstallerPath);
+        } else {
+          core.setFailed(`Failed to download ${msiUrl}`);
+        }
+
+        core.info(`Downloading: ${devMsiUrl}`);
+        const devMsiInstallerPath = await tc.downloadTool(devMsiUrl, installer[1]);
+
+        if (devMsiInstallerPath) {
+          await exec.exec('msiexec', [
+            '/passive',
+            `INSTALLDIR=${installDir}`,
+            'ADDLOCAL=ALL',
+            '/i',
+            devMsiInstallerPath,
+          ]);
+        } else {
+          core.setFailed(`Failed to download ${devMsiUrl}`);
+        }
+      } else {
+        for (const installer of installers) {
+          const url = `${baseUrl}/windows/${version}/msvc/${installer}`;
+
+          core.info(`Downloading: ${url}`);
+          const installerPath = await tc.downloadTool(url, installer);
+
+          if (installerPath) {
+            await exec.exec('msiexec', [
+              '/passive',
+              `INSTALLDIR=${installDir}`,
+              'ADDLOCAL=ALL',
+              '/i',
+              installerPath,
+            ]);
+          } else {
+            core.setFailed(`Failed to download ${url}`);
+          }
+        }
+      }
+      gstreamerPath = path.join(installDir, '1.0', `msvc_${arch}`);
       gstreamerBinPath = path.join(gstreamerPath, 'bin');
       gstreamerPkgConfigPath = path.join(gstreamerPath, 'lib', 'pkgconfig');
 
@@ -204,10 +158,6 @@ async function run() {
     } else if (process.platform === 'darwin') {
       if (arch == 'x86') {
         core.setFailed(`GStreamer binaries for ${process.platform} and x86 are not available`);
-        return;
-      }
-      if (buildSource) {
-        core.setFailed(`Cannot build from source for ${process.platform}`);
         return;
       }
       let pkgType = arch;
@@ -386,10 +336,9 @@ async function cleanup() {
   }
 }
 
-
 if (!core.getState('isPost')) {
   core.saveState('isPost', 'true');
-  run();
+  run(); 
 } else {
   if (process.platform === 'win32') {
     const msiUrl = core.getInput('msiUrl');
