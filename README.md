@@ -22,6 +22,21 @@ The architecture (`x86`, `x86_64`, etc.) of binaries to install.  Defaults to `x
 
 The URL from where to clone the gstreamer source (Linux targets only).  Defaults to `https://gitlab.freedesktop.org/gstreamer/gstreamer.git`.
 
+**WINDOWS ONLY:**
+
+### `msiUrl`
+
+An optional override url for downloading the Windows gstreamer runtime MSI installer. If not specified, the default is `https://gstreamer.freedesktop.org/data/pkg/windows/<version>/gstreamer-1.0-<arch>-<version>.msi`. If this input is specified then the action post run will be run and gsrtreamer will be uninstalled. These are primarily meant to be used in self hosted runners and not run in the gstreamer hosted runners that are bootstrapped and executed as non-persistent containers.
+
+### `devMsiUrl`
+
+An optional override url for downloading the Windows gstreamer development libraries and tools MSI installer. If not specified, the default is `https://gstreamer.freedesktop.org/data/pkg/windows/<version>/gstreamer-1.0-devel-<arch>-<version>.msi`.
+If the msiUrl is specified the devMsiUrl must also be specified.
+
+### `buildRun`
+
+An optional value that, if supplied, will separate the gstreamer installation path from other gstreamer installations. The environment variables will be updated to reflect the newest installation.
+
 ## Outputs
 
 ### `gstreamerPath`
