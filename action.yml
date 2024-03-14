@@ -17,10 +17,6 @@ inputs:
     description: 'the location of the source repository'
     required:    false
     default:     'https://gitlab.freedesktop.org/gstreamer/gstreamer.git'
-  forceBuildFromSource:
-    description: 'whether to force building from source instead of using installer package'
-    required: false
-    default: 'false'
   gstreamerOptions:
     description: 'The option configuration string for buliding GStreamer from source'
     required:    false
@@ -45,9 +41,19 @@ inputs:
       -Dgst-plugins-good:cairo=enabled
       -Dgst-plugins-good:soup=enabled
       -Dgst-plugins-good:soup-lookup-dep=true
+    msiUrl:
+      description: 'Optional override of the URL from which to download the Windows runtime msi installer'
+      required: false
+    devMsiUrl:
+      description: 'Optional override of the URL from which to download the Windows development libraries msi installer'
+      required: false
+    buildRun:
+      description: 'Optional input with the run number for the workflow'
+      required: false
 outputs:
   gstreamerPath:
     description: 'Installation path'
 runs:
   using: 'node20'
-  main: 'dist/index.js'
+  main: 'dist/main/index.js'
+  post: 'dist/post/index.js'

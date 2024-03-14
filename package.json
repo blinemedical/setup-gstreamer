@@ -8,7 +8,7 @@
   },
   "scripts": {
     "lint": "eslint .",
-    "prepare": "ncc build index.js -o dist --source-map --license licenses.txt",
+    "prepare": "ncc build index.js --out dist/main --source-map --license licenses.txt && ncc build cleanup.js --out dist/post --source-map --license licenses.txt",
     "test": "jest",
     "all": "npm run lint && npm run prepare && npm run test"
   },
