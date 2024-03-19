@@ -98,7 +98,7 @@ async function run() {
 
       if (msiUrl) {
         core.info(`Downloading: ${msiUrl}`);
-        const msiInstallerPath = await tc.downloadTool(msiUrl, installer[0]);
+        const msiInstallerPath = await tc.downloadTool(msiUrl, installers[0]);
 
         if (msiInstallerPath) {
           await exec.exec('msiexec', [
@@ -108,13 +108,12 @@ async function run() {
             '/i',
             msiInstallerPath,
           ]);
-          await io.rmRF(msiInstallerPath);
         } else {
           core.setFailed(`Failed to download ${msiUrl}`);
         }
 
         core.info(`Downloading: ${devMsiUrl}`);
-        const devMsiInstallerPath = await tc.downloadTool(devMsiUrl, installer[1]);
+        const devMsiInstallerPath = await tc.downloadTool(devMsiUrl, installers[1]);
 
         if (devMsiInstallerPath) {
           await exec.exec('msiexec', [
@@ -313,26 +312,6 @@ async function run() {
     core.exportVariable('PKG_CONFIG_PATH', PKG_CONFIG_PATH);
   } catch (error) {
     core.setFailed(error.message);
-  }
-}
-
-async function cleanup() {
-  const arch = core.getInput('arch');
-  const version = core.getInput('version');
-
-  const installers = [
-    `gstreamer-1.0-msvc-${arch}-${version}.msi`,
-    `gstreamer-1.0-devel-msvc-${arch}-${version}.msi`,
-  ];
-
-  for (const installer of installers) {
-    await exec.exec('msiexec', [
-      '/passive',
-      '/uninstall',
-      installer,
-    ]);
-
-    await io.rmRF(installer);
   }
 }
 
