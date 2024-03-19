@@ -1,5 +1,6 @@
 const core = require('@actions/core');
 const exec = require('@actions/exec');
+const io = require('@actions/io');
 
 async function cleanup() {
     if (process.platform === 'win32') {
