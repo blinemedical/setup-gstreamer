@@ -27407,6 +27407,8 @@ async function cleanup() {
         }
     }
 }
+
+cleanup();
 })();
 
 module.exports = __webpack_exports__;
