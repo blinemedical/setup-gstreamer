@@ -57,7 +57,7 @@ In this example, it is a Windows environment and we want to set the `GSTREAMER_.
 ```
 - name: Setup GStreamer
   id:   setup_gstreamer
-  uses: blinemedical/setup-gstreamer@1.0
+  uses: blinemedical/setup-gstreamer@1.4.0
   with:
     version: '1.19.90'
     arch: 'x86'
@@ -71,3 +71,4 @@ See the `.github/workflows/test.yml` for other examples.
 **References:**
  * [Custom Actions](https://docs.github.com/en/actions/creating-actions/about-custom-actions)
  * [Action Toolkit](https://github.com/actions/toolkit)
+
