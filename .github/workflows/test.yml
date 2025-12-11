@@ -10,8 +10,9 @@ jobs:
   units:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os: ['windows-2019', 'windows-2022', 'macos-12', 'ubuntu-20.04']
+        os: ['windows-2019', 'windows-2022', 'macos-15', 'ubuntu-22.04']
     steps:
     - uses: actions/checkout@v4
     - run: npm ci
@@ -21,13 +22,14 @@ jobs:
   test:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os: ['windows-2019', 'windows-2022', 'macos-12', 'ubuntu-20.04']
+        os: ['windows-2019', 'windows-2022', 'macos-15', 'ubuntu-22.04']
         arch: ['x86', 'x86_64']
         exclude:
-          - os:   'macos-12'
+          - os:   'macos-15'
             arch: 'x86'
-          - os:   'ubuntu-20.04'
+          - os:   'ubuntu-22.04'
             arch: 'x86'
 
     steps:
@@ -43,7 +45,7 @@ jobs:
       uses: ./
       with:
         arch: ${{ matrix.arch }}
-        version: '1.22.9'
+        version: '1.26.8'
 
     - name: Run gst-inspect --version
       run: |

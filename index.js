@@ -20,14 +20,9 @@ function LinuxDistroCommand(command, args) {
   return { cmd: command, args: args };
 }
 
-const combineBuildArgs = (systemArgs, userArgs) =>
-  systemArgs
-    .filter((systemArg) => !userArgs.some((userArg) => userArg.startsWith(systemArg.split('=')[0])))
-    .concat(userArgs);
-
 // Github action runners (shared) currently run in passwordless sudo mode.
 const DistroVersionPackageMap = {
-  Ubuntu: LinuxDistroConfig(['20.04', '22.04'], {}, [
+  Ubuntu: LinuxDistroConfig(['22.04'], {}, [
     LinuxDistroCommand('sudo', ['DEBIAN_FRONTEND=noninteractive', 'apt', 'update']),
     LinuxDistroCommand('sudo', [
       'DEBIAN_FRONTEND=noninteractive',
@@ -35,26 +30,12 @@ const DistroVersionPackageMap = {
       'install',
       '-y',
       'build-essential',
-      'libglib2.0-dev',
-      'libgudev-1.0-dev',
-      'libssl-dev',
-      'libcairo-dev',
-      'libxml2-dev',
-      'libjpeg-dev',
-      'libmjpegtools-dev',
-      'libopenjp2-7-dev',
-      'libwxgtk3.0-gtk3-dev',
-      'libsoup2.4-dev',
-      'libjson-glib-1.0-0',
-      'libjson-glib-dev',
-      'gcc',
-      'pkg-config',
       'git',
+      'curl',
       'python3-pip',
-      'flex',
-      'bison',
+      'python3-distro',
+      'python3-venv',
     ]),
-    LinuxDistroCommand('sudo', ['pip3', 'install', 'meson', 'ninja']),
   ]), // end of linuxdistroconfig
 };
 
@@ -64,7 +45,6 @@ async function run() {
     const version = core.getInput('version');
     const arch = core.getInput('arch');
     const gitUrl = core.getInput('repoUrl');
-    const userBuildArgs = core.getMultilineInput('gstreamerOptions');
     const msiUrl = core.getInput('msiUrl');
     const devMsiUrl = core.getInput('devMsiUrl');
     const buildRun = core.getInput('buildRun');
@@ -97,7 +77,7 @@ async function run() {
       ];
 
       if (msiUrl) {
-        core.info(`Downloading: ${msiUrl}`);
+        core.info(`Downloading from: ${msiUrl}`);
         const msiInstallerPath = await tc.downloadTool(msiUrl, installers[0]);
 
         if (msiInstallerPath) {
@@ -130,7 +110,7 @@ async function run() {
         for (const installer of installers) {
           const url = `${baseUrl}/windows/${version}/msvc/${installer}`;
 
-          core.info(`Downloading: ${url}`);
+          core.info(`Downloading from: ${url}`);
           const installerPath = await tc.downloadTool(url, installer);
 
           if (installerPath) {
@@ -171,7 +151,7 @@ async function run() {
       for (const installer of installers) {
         const url = `${baseUrl}/osx/${version}/${installer}`;
 
-        core.info(`Downloading: ${url}`);
+        core.info(`Downloading from: ${url}`);
         const installerPath = await tc.downloadTool(url, installer);
 
         if (installerPath) {
@@ -205,15 +185,6 @@ async function run() {
               await exec.exec(command.cmd, command.args, { env: config.env });
             }
 
-            let mesonVersion;
-            await exec.exec('meson', ['--version'], {
-              listeners: {
-                stdline: (line) => {
-                  mesonVersion = `meson-${line}`;
-                },
-              },
-            });
-
             // Come up with a unique key and attempt to fetch the cache under
             // that key.  If not found, clone, configure, build, and cache
             // the result before continuing.
@@ -222,7 +193,7 @@ async function run() {
             const gstsrc = 'gstreamer_src';
             const prefix = '/usr';
             const opt = { cwd: `${process.cwd()}/${gstsrc}` };
-            const key = `${github.context.repo.owner}-${github.context.repo.repo}-${gitUrl}-${version}-${arch}-${distro.name}-${distro.versionId}-${mesonVersion}-${keyVersion}`;
+            const key = `${github.context.repo.owner}-${github.context.repo.repo}-${gitUrl}-${version}-${arch}-${distro.name}-${distro.versionId}-${keyVersion}`;
             const cacheKey = await cache.restoreCache([gstsrc], key);
 
             if (!cacheKey) {
@@ -242,29 +213,18 @@ async function run() {
                 gstsrc,
               ]);
 
-              const linuxBuildArgs = [
-                '-Dges=disabled',
-                '-Dtests=disabled',
-                '-Dexamples=disabled',
-                '-Dgst-examples=disabled',
-                '-Ddoc=disabled',
-                '-Dgtk_doc=disabled',
-                '-Dgpl=enabled',
-              ];
-              const buildArgs = combineBuildArgs(linuxBuildArgs, userBuildArgs);
+              // Run Cerbero in stages, showing the config, etc. to the log so that we can
+              // debug build problems more easily.  Much of this pattern is borrowed from
+              // cerbero's own CI scripts.
+              const target_package = 'gstreamer-1.0';
+              await exec.exec('./cerbero-uninstalled', ['show-config'], opt);
+              await exec.exec('./cerbero-uninstalled', ['list'], opt);
+              await exec.exec('./cerbero-uninstalled', ['fetch-bootstrap'], opt);
+              await exec.exec('./cerbero-uninstalled', ['fetch-package', '--deps', target_package], opt);
+              await exec.exec('./cerbero-uninstalled', ['bootstrap', '--offline', '--system=no'], opt);
+              await exec.exec('./cerbero-uninstalled', ['package', '--offline', target_package], opt);
 
-              await exec.exec(
-                'meson',
-                [
-                  'setup',
-                  `--prefix=${prefix}`,
-                  ...buildArgs,
-                  'builddir',
-                ],
-                opt
-              );
-              await exec.exec('meson', ['compile', '-C', 'builddir'], opt);
-
+              // Cache the directory
               await cache.saveCache([gstsrc], key);
 
               core.info(`New cache created for this key: "${key}"`);
@@ -274,7 +234,13 @@ async function run() {
 
             // Install (runners are passwordless sudo, presently)
             core.info(`Installing gstreamer ${version} to ${prefix}`);
-            await exec.exec('sudo', ['meson', 'install', '-C', 'builddir'], opt);
+
+            // Find the tarball and install it.
+            await exec.exec('sudo', ['mkdir', '-p', prefix], opt);
+            await exec.exec('find', [
+              '.', '-maxdepth', '1', '-name', `${target_package}-*.tar.xz`,
+              '-exec', 'sudo', 'tar', 'xJvf', '{}', '-C', prefix, '\;'
+            ], opt);
 
             gstreamerPath = `${prefix}/lib/${arch}-linux-gnu/gstreamer-1.0`;
             gstreamerBinPath = `${prefix}/bin`;

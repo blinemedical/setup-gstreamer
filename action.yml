@@ -16,31 +16,7 @@ inputs:
   repoUrl:
     description: 'the location of the source repository'
     required:    false
-    default:     'https://gitlab.freedesktop.org/gstreamer/gstreamer.git'
-  gstreamerOptions:
-    description: 'The option configuration string for buliding GStreamer from source'
-    required:    false
-    default: |-
-      -Dlibnice:tests=disabled
-      -Dlibnice:examples=disabled
-      -Dopenh264:tests=disabled
-      -Dpygobject:tests=false
-      -Dpython=enabled
-      -Dlibav=enabled
-      -Dugly=enabled
-      -Dbad=enabled
-      -Ddevtools=enabled
-      -Dges=enabled
-      -Drtsp_server=enabled
-      -Dvaapi=enabled
-      -Dsharp=disabled
-      -Dgpl=enabled
-      -Dpython=disabled
-      -Dvaapi=disabled
-      -Dgst-plugins-base:pango=enabled
-      -Dgst-plugins-good:cairo=enabled
-      -Dgst-plugins-good:soup=enabled
-      -Dgst-plugins-good:soup-lookup-dep=true
+    default:     'https://gitlab.freedesktop.org/gstreamer/cerbero.git'
   msiUrl:
     description: 'Optional override of the URL from which to download the Windows runtime msi installer'
     required: false
