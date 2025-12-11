@@ -102568,12 +102568,19 @@ async function run() {
               // debug build problems more easily.  Much of this pattern is borrowed from
               // cerbero's own CI scripts.
               const target_package = 'gstreamer-1.0';
+              const build_deps = "gstreamer-1.0 gst-plugins-base-1.0 gst-plugins-good-1.0 \
+                  gst-plugins-bad-1.0 gst-plugins-ugly-1.0 gst-rtsp-server-1.0 \
+                  gst-devtools-1.0 gst-editing-services-1.0 libnice gst-plugins-rs \
+                ";
+              const more_deps = "glib-networking gst-libav-1.0"
               await exec.exec('./cerbero-uninstalled', ['show-config'], opt);
               await exec.exec('./cerbero-uninstalled', ['list'], opt);
-              await exec.exec('./cerbero-uninstalled', ['fetch-bootstrap'], opt);
-              await exec.exec('./cerbero-uninstalled', ['fetch-package', '--deps', target_package], opt);
-              await exec.exec('./cerbero-uninstalled', ['bootstrap', '--offline', '--system=no'], opt);
-              await exec.exec('./cerbero-uninstalled', ['package', '--offline', target_package], opt);
+              await exec.exec('./cerbero-uninstalled', ['fetch-bootstrap', '--jobs=4'], opt);
+              await exec.exec('./cerbero-uninstalled', ['fetch-package', '--jobs=4', '--deps', target_package], opt);
+              await exec.exec('./cerbero-uninstalled', ['bootstrap', '--offline', '--system=no', '--assume-yes'], opt);
+              await exec.exec('./cerbero-uninstalled', ['build-deps', '--offline', build_deps], opt);
+              await exec.exec('./cerbero-uninstalled', ['build', '--offline', more_deps], opt);
+              await exec.exec('./cerbero-uninstalled', ['package', target_package], opt);
 
               // Cache the directory
               await cache.saveCache([gstsrc], key);
